@@ -1,0 +1,23 @@
+[
+{
+    "furnaceLabel": "sample",
+    "index": 1,
+    "eurothermPort": 502,
+    "eurothermIp": "192.168.168.222",
+    "cameraPort": 12345,
+    "cameraIp": "192.168.1.2",
+    "modbusAdapterIp": "192.158.391.1",
+    "pullerSlaveId": 213,
+    "rotaterSlaveId": 214
+},
+{
+    "furnaceLabel": "sample2",
+    "index": 2,
+    "eurothermPort": 502,
+    "eurothermIp": "192.168.1.3",
+    "cameraPort": 12345,
+    "cameraIp": "192.168.1.4",
+    "pullerSlaveId": 255,
+    "rotaterSlaveId": 254
+}
+]
