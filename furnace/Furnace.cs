@@ -151,7 +151,7 @@ public class Furnace
         return;
     }
 
-    public void SetSetpoint(float setpoint)
+    public void SetSetpoint(double setpoint)
     {
         Controller.Connect();
         Controller.Heater.SP(setpoint);

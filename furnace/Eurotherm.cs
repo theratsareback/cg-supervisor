@@ -66,9 +66,9 @@ public class Heater
         return registers[0] / 10.0f;
     }
 
-    public void SP(float setpoint)
+    public void SP(double setpoint)
     {
-        setpoint *= 10.0f; // Eurotherm considers an input of 123 to be 12.3, 1234 to be 123.4, etc.
+        setpoint *= 10.0; // Eurotherm considers an input of 123 to be 12.3, 1234 to be 123.4, etc.
 
         try
         {
@@ -78,7 +78,7 @@ public class Heater
         {
             Thread.Sleep(10);
             ushort[] result = _modbusMaster.ReadHoldingRegisters(_slaveId, 2, 2);
-            float delta = Math.Abs(result[0] - setpoint);
+            double delta = Math.Abs(result[0] - setpoint);
             if (delta > 0.25f)
             {
                 Console.WriteLine($"Warning: Setpoint not successfully written. Error of {delta}");
