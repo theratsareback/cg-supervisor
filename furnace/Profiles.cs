@@ -7,7 +7,7 @@ public class Segment
     public byte Type { get; set; }
     public byte Index { get; set; }
     public uint Duration { get; set; }
-    public ushort Endpoint { get; set; }
+    public double Endpoint { get; set; }
 
 }
 public class Profile

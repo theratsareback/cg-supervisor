@@ -46,20 +46,21 @@ class Program
         // //     }
         // // }
 
+        string ip = "192.168.168.222";
+        var testFurnace = new Furnace(1, "PbMO4 furnace 1", 502, ip, 1, ip, ip, 1, 1);
+
         string label = "PbMoO4";
 
         var profileHandler = new ProfileHandler();
-        string ip = "192.168.168.222";
-        var testFurnace = new Furnace(1, "PbMO4 furnace 1", 502, ip, 1, ip, ip, 1, 1);
 
         foreach (var profile in profileHandler.profiles)
         {
             if (profile.Label == label)
             {
-                profileHandler.activeProfile = profile;
+                profileHandler.Select(profile);
             }
-
         }
+        
         profileHandler.Stop();
         profileHandler.Start();
 
