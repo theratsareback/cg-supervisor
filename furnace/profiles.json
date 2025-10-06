@@ -1,0 +1,48 @@
+[
+{
+  "Label": "PbMoO4",
+  "Segments": [
+    { 
+        "Type": 1,
+        "Index": 1,
+        "Duration": 96000,
+        "Endpoint": 200
+    },
+    { 
+        "Type": 2,
+        "Index": 2,
+        "Duration": 96000,
+        "Endpoint": 200
+    },
+    { 
+        "Type": 1,
+        "Index": 3,
+        "Duration": 9600,
+        "Endpoint": 600
+    }
+  ]
+},
+{
+  "Label": "TeO2",
+  "Segments": [
+    { 
+        "Type": 1,
+        "Index": 1,
+        "Duration": 96000,
+        "Endpoint": 300
+    },
+    { 
+        "Type": 2,
+        "Index": 2,
+        "Duration": 96000,
+        "Endpoint": 300
+    },
+    { 
+        "Type": 1,
+        "Index": 3,
+        "Duration": 9600,
+        "Endpoint": 900
+    }
+  ]
+}
+]

@@ -223,11 +223,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\maxbp\\Shared\\Code Projects\\Eurotherm Control\\test\\test.csproj",
+      "projectUniqueName": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\test.csproj",
       "projectName": "test",
-      "projectPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\Eurotherm Control\\test\\test.csproj",
+      "projectPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\test.csproj",
       "packagesPath": "C:\\Users\\maxbp\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\Eurotherm Control\\test\\obj\\",
+      "outputPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\maxbp\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -242,8 +242,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\maxbp\\Shared\\Code Projects\\Eurotherm Control\\furnace\\furnace.csproj": {
-              "projectPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\Eurotherm Control\\furnace\\furnace.csproj"
+            "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj": {
+              "projectPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj"
             }
           }
         }

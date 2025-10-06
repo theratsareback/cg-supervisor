@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "6VZ1pG4tlL8=",
+  "dgSpecHash": "LnicQa0Q1no=",
   "success": true,
-  "projectFilePath": "C:\\Users\\maxbp\\Shared\\Code Projects\\Eurotherm Control\\test\\test.csproj",
+  "projectFilePath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\test.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\maxbp\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\maxbp\\.nuget\\packages\\nmodbus\\3.0.81\\nmodbus.3.0.81.nupkg.sha512",
