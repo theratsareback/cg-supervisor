@@ -130,6 +130,7 @@ public class Furnace
                     furnaces[i].pullerSlaveId = pullerSlaveId;
                     furnaces[i].rotaterSlaveId = rotaterSlaveId;
                     Controller = new Eurotherm(eurothermIp, eurothermPort);
+                    Controller.Connect();
                     File.WriteAllText(@"furnaces.json", JsonConvert.SerializeObject(furnaces, Formatting.Indented)); // update json array and write to file
                     //camera = new Capture(camIp, camPort);
                     //camera.Start();
@@ -145,6 +146,7 @@ public class Furnace
 
         // then finish making Furnace instance
         Controller = new Eurotherm(eurothermIp, eurothermPort);
+        Controller.Connect();
         //camera = new Capture(camIp, camPort);
         //camera.Start();
         //TODO MOTORS
@@ -153,9 +155,7 @@ public class Furnace
 
     public void SetSetpoint(double setpoint)
     {
-        Controller.Connect();
         Controller.Heater.SP(setpoint);
-        Controller.Disconnect();
     }
 
     /// <summary>
@@ -163,9 +163,7 @@ public class Furnace
     /// </summary>
     public void Enable()
     {
-        Controller.Connect();
         Controller.Heater.Enable();
-        Controller.Disconnect();
     }
 
     /// <summary>
@@ -173,16 +171,12 @@ public class Furnace
     /// </summary>
     public void Disable()
     {
-        Controller.Connect();
         Controller.Heater.Disable();
-        Controller.Disconnect();
     }
 
     public float GetProcessValue()
     {
-        Controller.Connect();
         float pv = Controller.Heater.PV();
-        Controller.Disconnect();
         return pv;
     }
 
@@ -195,9 +189,7 @@ public class Furnace
     /// <returns></returns>
     public byte GetStatus()
     {
-        Controller.Connect();
         byte status = Controller.Heater.CheckHeaterStatus();
-        Controller.Disconnect();
         return status;
     }
 
@@ -212,7 +204,6 @@ public class Furnace
     /// </returns>
     public byte GetAlarm(byte alarmIndex)
     {
-        Controller.Connect();
         byte status = Controller.alarms[alarmIndex].GetStatus();
         return status;
     }
