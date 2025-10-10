@@ -1,0 +1,24 @@
+[
+  {
+    "furnaceLabel": "PbMO4 furnace 1",
+    "index": 1,
+    "eurothermPort": 502,
+    "eurothermIp": "192.168.168.222",
+    "cameraPort": 1,
+    "cameraIp": "192.168.168.222",
+    "modbusAdapterIp": "192.168.168.222",
+    "pullerSlaveId": 1,
+    "rotaterSlaveId": 1
+  },
+  {
+    "furnaceLabel": "sample2",
+    "index": 2,
+    "eurothermPort": 502,
+    "eurothermIp": "192.168.1.3",
+    "cameraPort": 12345,
+    "cameraIp": "192.168.1.4",
+    "modbusAdapterIp": null,
+    "pullerSlaveId": 255,
+    "rotaterSlaveId": 254
+  }
+]
