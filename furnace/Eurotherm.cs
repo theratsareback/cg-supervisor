@@ -96,13 +96,14 @@ public class Heater
         WriteHeaterControl(0);
     }
 
-    public byte CheckHeaterStatus()
+    public FurnaceStatus CheckHeaterStatus()
     {
         ushort[] alarminterlocks = _modbusMaster.ReadHoldingRegisters(_slaveId, 8120, 1);
         ushort[] enableinterlocks = _modbusMaster.ReadHoldingRegisters(_slaveId, 1990, 1);
 
-        return (byte)((alarminterlocks[0] << 1) + enableinterlocks[0]);
-        //returns 0 if enabled and ok, 1 if ok but disabled, 2 if alarm and enable, 3 if alarm and disabled
+        if (alarminterlocks[0] == 1) { return FurnaceStatus.Alarm; }
+        if (enableinterlocks[0] == 1) { return FurnaceStatus.Disabled; }
+        else { return FurnaceStatus.Enabled; }
     }
 
     private void WriteHeaterControl(ushort value)
@@ -131,9 +132,9 @@ public class Alarm
         _registerAddress = registerAddress;
     }
 
-    public byte GetStatus()
+    public AlarmStatus GetStatus()
     {
-        return (byte)_modbusMaster.ReadHoldingRegisters(_slaveId, _registerAddress, 1)[0];
+        return (AlarmStatus)_modbusMaster.ReadHoldingRegisters(_slaveId, _registerAddress, 1)[0];
         //0 for off, 1 for active but acknowledged, 2 for inactive not acknowledged, 3 for active not acknowledged
     }
 

@@ -3,43 +3,14 @@ namespace furnace;
 using System;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Channels;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 public class InvalidFurnaceException : Exception
 {
     public InvalidFurnaceException() : base("Entered furnace is not valid.") { }
     public InvalidFurnaceException(string message) : base(message) { }
-}
-
-/// <summary>
-/// Class <c>FurnaceData</c> is a datatype for storing furnaces as JSON objects.
-/// </summary>
-class FurnaceData
-{
-    public string furnaceLabel;
-    public byte index;
-    public int eurothermPort;
-    public string eurothermIp;
-
-    public int cameraPort;
-    public string cameraIp;
-
-    public string modbusAdapterIp;
-    public byte pullerSlaveId;
-    public byte rotaterSlaveId;
-
-    public FurnaceData(string _furnaceLabel, byte _index, int _eurothermPort, string _eurothermIp, int _cameraPort, string _cameraIp, string _modbusAdapterIp, byte _pullerSlaveId, byte _rotaterSlaveId)
-    {
-        furnaceLabel = _furnaceLabel;
-        index = _index;
-        eurothermPort = _eurothermPort;
-        eurothermIp = _eurothermIp;
-        cameraPort = _cameraPort;
-        cameraIp = _cameraIp;
-        modbusAdapterIp = _modbusAdapterIp;
-        pullerSlaveId = _pullerSlaveId;
-        rotaterSlaveId = _rotaterSlaveId;
-    }
 }
 
 /// <summary>
@@ -50,6 +21,19 @@ public class Furnace
     private Eurotherm Controller;
     private StepperController stepper;
     private Capture camera;
+    public FurnaceInit init;
+    private CancellationTokenSource? _cts;
+    private bool isEnabled;
+
+    static BoundedChannelOptions channelOptions = new(capacity: 1)
+    {
+        FullMode = BoundedChannelFullMode.DropOldest, // drop the current value to keep only the newest
+        SingleWriter = true,
+        SingleReader = true
+    };
+
+    Channel<FurnaceState> loopOut = Channel.CreateBounded<FurnaceState>(channelOptions);
+    Channel<FurnaceState> loopIn = Channel.CreateBounded<FurnaceState>(channelOptions);
 
     /// <summary>
     /// Constructor <c>Furnace</c> with param <c>index</c> looks for an existing furnace in <c>furnaces.json</c>. <br/>
@@ -67,7 +51,7 @@ public class Furnace
             throw new InvalidFurnaceException("No existing furnaces");
         }
 
-        List<FurnaceData>? furnaces = JsonConvert.DeserializeObject<List<FurnaceData>>(File.ReadAllText(@"furnaces.json"));
+        List<FurnaceInit>? furnaces = JsonConvert.DeserializeObject<List<FurnaceInit>>(File.ReadAllText(@"furnaces.json"));
 
         if (furnaces == null)
         {
@@ -79,6 +63,7 @@ public class Furnace
         {
             if (furnaces[i].index == index)
             {
+                init = furnaces[i];
                 Controller = new Eurotherm(furnaces[i].eurothermIp, furnaces[i].eurothermPort);
                 //camera = new Capture(furnaces[i].cameraIp, furnaces[i].cameraPort);
                 //camera.Start();
@@ -101,17 +86,17 @@ public class Furnace
     /// <param name="eurothermIp">IPV4 address for the Eurotherm</param>
     /// <param name="camPort">Network port for the Camera</param>
     /// <param name="camIp">IPV4 address for the Camera</param>
-    /// <param name="modbusAdapterIp">IPV4 address for the Modbus TCP/IP to RTU adapter</param>
+    /// <param name="pullerIp">IPV4 address for the Modbus TCP/IP to RTU adapter</param>
     /// <param name="pullerSlaveId">Modbus slave ID for the puller stepper driver</param>
     /// <param name="rotaterSlaveId">Modbus slave ID for the rotater stepper driver</param>
-    public Furnace(byte index, string furnaceLabel, int eurothermPort, string eurothermIp, int camPort, string camIp, string modbusAdapterIp, byte pullerSlaveId, byte rotaterSlaveId)
+    public Furnace(byte index, string furnaceLabel, int eurothermPort, string eurothermIp, int camPort, string camIp, string pullerIp, byte pullerSlaveId, byte rotaterSlaveId)
     {
         if (!File.Exists(@"furnaces.json"))
         {
             File.WriteAllText(@"furnaces.json", "[]"); // if file doesn't exist, make one with an empty list
         }
 
-        List<FurnaceData>? furnaces = JsonConvert.DeserializeObject<List<FurnaceData>>(File.ReadAllText(@"furnaces.json"));
+        List<FurnaceInit>? furnaces = JsonConvert.DeserializeObject<List<FurnaceInit>>(File.ReadAllText(@"furnaces.json"));
 
         furnaces ??= []; // make empty list if file is null
 
@@ -121,12 +106,13 @@ public class Furnace
             {
                 if (furnaces[i].index == index)
                 {
-                    furnaces[i].eurothermIp = eurothermIp; // update existing furnacedata instance to new entry
+                    init = furnaces[i];
+                    furnaces[i].eurothermIp = eurothermIp; // update existing FurnaceData instance to new entry
                     furnaces[i].eurothermPort = eurothermPort;
                     furnaces[i].furnaceLabel = furnaceLabel;
                     furnaces[i].cameraPort = camPort;
                     furnaces[i].cameraIp = camIp;
-                    furnaces[i].modbusAdapterIp = modbusAdapterIp;
+                    furnaces[i].pullerIp = pullerIp;
                     furnaces[i].pullerSlaveId = pullerSlaveId;
                     furnaces[i].rotaterSlaveId = rotaterSlaveId;
                     Controller = new Eurotherm(eurothermIp, eurothermPort);
@@ -139,8 +125,9 @@ public class Furnace
                 }
             }
         }
-        FurnaceData newFurnace; // if existing FurnaceData not found, make new one and append to list
-        newFurnace = new FurnaceData(furnaceLabel, index, eurothermPort, eurothermIp, camPort, camIp, modbusAdapterIp, pullerSlaveId, rotaterSlaveId);
+        FurnaceInit newFurnace; // if existing FurnaceData not found, make new one and append to list
+        newFurnace = new FurnaceInit(furnaceLabel, index, eurothermPort, eurothermIp, camPort, camIp, pullerIp, pullerSlaveId, rotaterSlaveId);
+        init = newFurnace;
         furnaces.Add(newFurnace);
         File.WriteAllText(@"furnaces.json", JsonConvert.SerializeObject(furnaces, Formatting.Indented)); // update json array and write to file
 
@@ -162,16 +149,24 @@ public class Furnace
     /// Enable heating element output
     /// </summary>
     public void Enable()
-    {
-        Controller.Heater.Enable();
+    {   
+        if (!isEnabled)
+        {
+            Controller.Heater.Enable();
+            isEnabled = true;
+        }
     }
 
     /// <summary>
     /// Disable heating element output
     /// </summary>
     public void Disable()
-    {
-        Controller.Heater.Disable();
+    {   
+        if (isEnabled)
+        {
+            Controller.Heater.Disable();
+            isEnabled = false;
+        }
     }
 
     public float GetProcessValue()
@@ -184,12 +179,12 @@ public class Furnace
     /// Checks the status of the furnace's Eurotherm.
     /// Returns a value of 0 for active, 1 if no alarms are on but the heater is disabled, 
     /// 2 if there is an active alarm and the furnace is enabled, and 3 if the furnace is disabled with an alarm.
-    /// This could be used to make a reference graphic where 0 is a green circle, 1 is yellow, and 2/3 are both red.
+    /// This could be used to make a reference graphic where 0 is a green circle, 1 is grey, and 2/3 are both red.
     /// </summary>
     /// <returns></returns>
-    public byte GetStatus()
+    public FurnaceStatus GetStatus()
     {
-        byte status = Controller.Heater.CheckHeaterStatus();
+        FurnaceStatus status = Controller.Heater.CheckHeaterStatus();
         return status;
     }
 
@@ -202,9 +197,9 @@ public class Furnace
     /// 0 if alarm is off, 1 for active but acknowledged, 
     /// 2 for inactive not acknowledged, 3 for active not acknowledged
     /// </returns>
-    public byte GetAlarm(byte alarmIndex)
+    public AlarmStatus GetAlarm(byte alarmIndex)
     {
-        byte status = Controller.alarms[alarmIndex].GetStatus();
+        AlarmStatus status = Controller.alarms[alarmIndex].GetStatus();
         return status;
     }
 
@@ -212,4 +207,43 @@ public class Furnace
     // {
     //     return camera.GetBestFit();
     // }
+
+    public void Start()
+    {
+        _cts = new CancellationTokenSource();
+        Task.Run(() => Run(_cts.Token));
+    }
+
+    private async Task Run(CancellationToken token)
+    {
+        // ProfileHandler handler = new ProfileHandler();
+
+        // while (!token.IsCancellationRequested)
+        // {
+        //     FurnaceState setState = await loopIn.Reader.ReadAsync(token);
+        //     handler.activeProfile = setState.activeProfile;
+
+        //     if (setState.isRunning)
+        //     {
+        //         handler.Start();
+        //         Enable();
+        //     }
+        //     else if (setState.stopped)
+        //     {
+        //         handler.Stop();
+        //         Disable();
+        //     }
+        //     else
+        //     {
+        //         handler.Pause();
+        //         Enable();
+        //     }
+        //     if (!setState.stopped)
+        //     {
+        //         setState.setpoint = handler.activeProfile.GetSetpoint();
+        //         SetSetpoint(setState.trim + setState.setpoint);
+        //     }
+        //     setState.processValue = GetProcessValue();
+        // }
+    }
 }

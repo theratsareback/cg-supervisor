@@ -202,6 +202,8 @@ public class ProfileHandler
     private const string FilePath = @"profiles.json";
     public List<Profile> profiles = [];
     public Profile? activeProfile;
+    public bool isRunning;
+    public bool stopped;
 
     /// <summary>
     /// Instantiates a profileHander object and imports profiles from a .json.
@@ -252,15 +254,25 @@ public class ProfileHandler
     /// </summary>
     public void Start()
     {
-        activeProfile?.OnTimer.Start();
+        if (!isRunning)
+        {
+            activeProfile?.OnTimer.Start();
+            isRunning = true;
+            stopped = false;
+        }
     }
 
     /// <summary>
     /// Pauses current profile timebase
     /// </summary>
     public void Pause()
-    {
-        activeProfile?.OnTimer.Pause();
+    {   
+        if (isRunning)
+        {
+            activeProfile?.OnTimer.Pause();
+            isRunning = false;
+            stopped = false;
+        }
     }
 
     /// <summary>
@@ -268,7 +280,12 @@ public class ProfileHandler
     /// </summary>
     public void Stop()
     {
-        activeProfile?.OnTimer.Pause();
-        activeProfile?.OnTimer.Reset();
+        if (stopped)
+        {  
+            activeProfile?.OnTimer.Pause();
+            activeProfile?.OnTimer.Reset();
+            isRunning = false;
+            stopped = true;
+        }
     }
 }
