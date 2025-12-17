@@ -59,11 +59,7 @@ public class FurnaceScheduler : IDisposable
         _setChannels.Add(setChannel);
         _stateChannels.Add(stateChannel);
         setValues.Add(default);
-        stateValues.Add(default);
-
-        var state = stateValues[index];
-        state._active = true;
-        stateValues[index] = state;
+        stateValues.Add(new FurnaceState());
 
         _furnacesInit ??= [];
         Furnace furnace = new Furnace(init, setChannel, stateChannel, index);

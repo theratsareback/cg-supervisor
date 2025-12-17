@@ -67,6 +67,10 @@ public class FurnaceState
         state = _state;
         time_s = _time_s;
     }
+    public FurnaceState()
+    {
+        _active = false;
+    }
 }
 
 public enum ProcessState { None, Pause, Resume }
