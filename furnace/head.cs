@@ -4,12 +4,12 @@ using System.Net.Sockets;
 using System.Threading;
 
 /// <summary>
-/// Class <c>FurnaceInit</c> is a datatype representing the state of one furnace.
+/// Class <c>FurnaceInit</c> is a datatype containing the values to initialize one furnace. This is stored in a .JSON on the backend computers
 /// </summary>
 public class FurnaceInit
 {
     public string furnaceLabel;
-    public byte index;
+    public int index;
     public int eurothermPort;
     public string eurothermIp;
 
@@ -20,7 +20,7 @@ public class FurnaceInit
     public byte pullerSlaveId;
     public byte rotaterSlaveId;
 
-    public FurnaceInit(string _furnaceLabel, byte _index, int _eurothermPort, string _eurothermIp, int _cameraPort, string _cameraIp, string _pullerIp, byte _pullerSlaveId, byte _rotaterSlaveId)
+    public FurnaceInit(string _furnaceLabel, int _index, int _eurothermPort, string _eurothermIp, int _cameraPort, string _cameraIp, string _pullerIp, byte _pullerSlaveId, byte _rotaterSlaveId)
     {
         furnaceLabel = _furnaceLabel;
         index = _index;
@@ -34,9 +34,14 @@ public class FurnaceInit
     }
 }
 
-public struct FurnaceState
+/// <summary>
+/// Class <c>FurnaceState</c> contains information about a single furnace's current state
+/// </summary>
+public class FurnaceState
 {
-    public string profileName;
+    public bool _active;
+    public string? furnaceLabel;
+    public string? profileName;
     public double processValue;
     public double setpoint;
     public FurnaceStatus status;
@@ -46,17 +51,36 @@ public struct FurnaceState
     public AlarmStatus rspFailure;
     public ProcessState state;
     public long time_s;
+
+    public FurnaceState(string _furnaceLabel, string _profileName, double _processValue, double _setpoint, FurnaceStatus _status, AlarmStatus _underrange, AlarmStatus _overrange, AlarmStatus _sensor, AlarmStatus _rsp, ProcessState _state, long _time_s)
+    {
+        _active = true;
+        furnaceLabel = _furnaceLabel;
+        profileName = _profileName;
+        processValue = _processValue;
+        setpoint = _setpoint;
+        status = _status;
+        underrangeAlarm = _underrange;
+        overrangeAlarm = _overrange;
+        sensorBreak = _sensor;
+        rspFailure = _rsp;
+        state = _state;
+        time_s = _time_s;
+    }
 }
 
 public enum ProcessState { None, Pause, Resume }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus {Off, OnAck, OffNonAck, OnNonAck}
 
+/// <summary>
+/// Struct <c>FurnaceSet</c> contains the state of the frontend interface
+/// </summary>
 public struct FurnaceSet
 {
     public double setpoint;
     public double trim;
     public ProcessState state;
-    public Profile setProfile;
+    public Profile? setProfile;
     // TODO motor speeds and alarm acknowledgements
 }
