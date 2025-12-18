@@ -179,7 +179,7 @@ public class Furnace
                 SetSetpoint(_setpoint);
                 if (activeProfile != null)
                 {
-                    FurnaceState newState = new FurnaceState(furnaceLabel, activeProfile.Label, _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, activeProfile.state.status, (long)activeProfile.OnTimer.ElapsedSeconds);
+                    FurnaceState newState = new FurnaceState(furnaceLabel, activeProfile.Label, _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, activeProfile.state.Status, (long)activeProfile.OnTimer.ElapsedSeconds);
                     _out.TryWrite(newState);
                 }
                 else

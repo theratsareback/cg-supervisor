@@ -15,7 +15,7 @@ public class Segment
 public readonly record struct ProfileState(
     int CurrentIndex,
     double LastOut,
-    ProfileStatus status,
+    ProfileStatus Status,
     byte CurrentType
 );
 
@@ -41,7 +41,7 @@ public static class ProfileMath
     {
         if (segments.Count == 0)
         {
-            var empty = state with { CurrentIndex = 0, LastOut = 0, status = ProfileStatus.Paused, CurrentType = 0 };
+            var empty = state with { CurrentIndex = 0, LastOut = 0, Status = ProfileStatus.Paused, CurrentType = 0 };
             return new EvalOutput(0, empty, CoordinatorEffect.None);
         }
 
@@ -72,7 +72,7 @@ public static class ProfileMath
                     var next = new ProfileState(
                         CurrentIndex: i,
                         LastOut: lastOut,
-                        status: ProfileStatus.Paused,
+                        Status: ProfileStatus.Paused,
                         CurrentType: seg.Type
                     );
                     return new EvalOutput(lastOut, next, CoordinatorEffect.Pause);
@@ -115,7 +115,7 @@ public static class ProfileMath
         var endState = new ProfileState(
             CurrentIndex: segments.Count - 1,
             LastOut: lastOut,
-            status: ProfileStatus.Stopped,
+            Status: ProfileStatus.Stopped,
             CurrentType: segments[^1].Type
         );
         return new EvalOutput(lastOut, endState, CoordinatorEffect.None);
@@ -126,12 +126,13 @@ public static class ProfileMath
 public sealed class Profile
 {
     public string Label { get; init; }
+    public int profileIndex;
     public List<Segment> Segments { get; } = new();
     public Timer OnTimer { get; set; } = new();
 
     [JsonIgnore] public byte Type => state.CurrentType;
 
-    public ProfileState state = new(CurrentIndex: 0, LastOut: 0, status: ProfileStatus.Paused, CurrentType: 0);
+    public ProfileState state = new(CurrentIndex: 0, LastOut: 0, Status: ProfileStatus.Paused, CurrentType: 0);
 
     /// <summary>
     /// Get current setpoint according to profile
@@ -181,19 +182,19 @@ public sealed class Profile
             {
                 CurrentIndex = next,
                 LastOut = lastOut,
-                status = ProfileStatus.Running,
+                Status = ProfileStatus.Running,
                 CurrentType = Segments[next].Type
             };
             OnTimer.Start();
         }
-        else if (state.status != ProfileStatus.Running)
+        else if (state.Status != ProfileStatus.Running)
         {
             Console.WriteLine("starting from non-segment pause");
             state = state with
             {
                 CurrentIndex = state.CurrentIndex,
                 LastOut = state.LastOut,
-                status = ProfileStatus.Running,
+                Status = ProfileStatus.Running,
                 CurrentType = state.CurrentType
             };
             OnTimer.Start();
@@ -206,7 +207,7 @@ public sealed class Profile
     /// </summary>
     public void Pause()
     {   
-        if (state.status != ProfileStatus.Paused)
+        if (state.Status != ProfileStatus.Paused)
         {
             OnTimer.Pause();
 
@@ -214,7 +215,7 @@ public sealed class Profile
             {
                 CurrentIndex = state.CurrentIndex,
                 LastOut = state.LastOut,
-                status = ProfileStatus.Paused,
+                Status = ProfileStatus.Paused,
                 CurrentType = state.CurrentType
             };
         }
@@ -225,7 +226,7 @@ public sealed class Profile
     /// </summary>
     public void Stop()
     {   
-        if (state.status != ProfileStatus.Stopped)
+        if (state.Status != ProfileStatus.Stopped)
         {
             OnTimer.Pause();
             OnTimer.Reset();

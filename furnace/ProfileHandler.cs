@@ -42,4 +42,15 @@ public class ProfileHandler
         File.WriteAllText(FilePath, json);
     }
 
+    public void ModifyProfile(Profile profile)
+    {
+        foreach (Profile oldprofile in profiles)
+        {
+            if (oldprofile.profileIndex == profile.profileIndex)
+            {
+                RemoveProfile(oldprofile);
+                AddProfile(profile);
+            }
+        }
+    }
 }

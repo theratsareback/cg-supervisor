@@ -75,7 +75,8 @@ public class FurnaceState
 public enum ProcessState { Stop, Pause, Continue } // rewrite as an event instead of stream
 public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
-public enum AlarmStatus {Off, OnAck, OffNonAck, OnNonAck}
+public enum AlarmStatus { Off, OnAck, OffNonAck, OnNonAck }
+public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile }
 
 /// <summary>
 /// Struct <c>FurnaceSet</c> contains the state of the frontend interface
@@ -89,4 +90,17 @@ public struct FurnaceSet
     public ProcessState state;
     public Profile? setProfile;
     // TODO motor speeds and alarm acknowledgements
+}
+
+
+public class Event<T>
+{
+    public EventType type;
+    public T? Data { get; }
+
+    public Event(EventType _type, T obj)
+    {
+        type = _type;
+        Data = obj;
+    }
 }

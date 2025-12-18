@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/home/isomet/src/cg-supervisor/test/test.csproj": {}
+    "C:\\Users\\maxbp\\cg-supervisor\\test\\test.csproj": {}
   },
   "projects": {
-    "/home/isomet/src/cg-supervisor/furnace/furnace.csproj": {
+    "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/isomet/src/cg-supervisor/furnace/furnace.csproj",
+        "projectUniqueName": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj",
         "projectName": "furnace",
-        "projectPath": "/home/isomet/src/cg-supervisor/furnace/furnace.csproj",
-        "packagesPath": "/home/isomet/.nuget/packages/",
-        "outputPath": "/home/isomet/src/cg-supervisor/furnace/obj/",
+        "projectPath": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj",
+        "packagesPath": "C:\\Users\\maxbp\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/isomet/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\maxbp\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -72,26 +72,40 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.16, 8.0.16]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.16, 8.0.16]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.16, 8.0.16]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "/home/isomet/src/cg-supervisor/test/test.csproj": {
+    "C:\\Users\\maxbp\\cg-supervisor\\test\\test.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/isomet/src/cg-supervisor/test/test.csproj",
+        "projectUniqueName": "C:\\Users\\maxbp\\cg-supervisor\\test\\test.csproj",
         "projectName": "test",
-        "projectPath": "/home/isomet/src/cg-supervisor/test/test.csproj",
-        "packagesPath": "/home/isomet/.nuget/packages/",
-        "outputPath": "/home/isomet/src/cg-supervisor/test/obj/",
+        "projectPath": "C:\\Users\\maxbp\\cg-supervisor\\test\\test.csproj",
+        "packagesPath": "C:\\Users\\maxbp\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\maxbp\\cg-supervisor\\test\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/isomet/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\maxbp\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -103,8 +117,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "/home/isomet/src/cg-supervisor/furnace/furnace.csproj": {
-                "projectPath": "/home/isomet/src/cg-supervisor/furnace/furnace.csproj"
+              "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj": {
+                "projectPath": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj"
               }
             }
           }
@@ -135,12 +149,30 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.16, 8.0.16]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.16, 8.0.16]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.16, 8.0.16]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.16, 8.0.16]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -18,7 +18,6 @@ class Program
         Profile activeProfile;
         FurnaceSet testSet = default(FurnaceSet);
         
-        Console.WriteLine("Setup started");
 
         foreach (var profile in profileHandler.profiles)
         {
@@ -36,14 +35,12 @@ class Program
         testSet.state = ProcessState.Continue;
         
         furnaceScheduler.setValues[0] = testSet;
-        Console.WriteLine("Setup finished");
-        furnaceScheduler.Push();
 
 
         while (true)
         {
+            furnaceScheduler.Push();
             furnaceScheduler.Pull();
-            Console.WriteLine($"SP is {furnaceScheduler.stateValues[0].setpoint}");
         }
 
     }

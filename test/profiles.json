@@ -1,6 +1,7 @@
 [
 {
   "Label": "PbMoO4",
+  "profileIndex": 0,
   "Segments": [
     { 
         "Type": 1,
@@ -30,6 +31,7 @@
 },
 {
   "Label": "TeO2",
+  "profileIndex": 1,
   "Segments": [
     { 
         "Type": 1,
