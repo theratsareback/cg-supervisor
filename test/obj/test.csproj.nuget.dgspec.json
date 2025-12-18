@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\test.csproj": {}
+    "/home/isomet/src/cg-supervisor/test/test.csproj": {}
   },
   "projects": {
-    "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj": {
+    "/home/isomet/src/cg-supervisor/furnace/furnace.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj",
+        "projectUniqueName": "/home/isomet/src/cg-supervisor/furnace/furnace.csproj",
         "projectName": "furnace",
-        "projectPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj",
-        "packagesPath": "C:\\Users\\maxbp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\obj\\",
+        "projectPath": "/home/isomet/src/cg-supervisor/furnace/furnace.csproj",
+        "packagesPath": "/home/isomet/.nuget/packages/",
+        "outputPath": "/home/isomet/src/cg-supervisor/furnace/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\maxbp\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/home/isomet/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -72,40 +72,26 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.19, 8.0.19]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.19, 8.0.19]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.19, 8.0.19]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\test.csproj": {
+    "/home/isomet/src/cg-supervisor/test/test.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\test.csproj",
+        "projectUniqueName": "/home/isomet/src/cg-supervisor/test/test.csproj",
         "projectName": "test",
-        "projectPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\test.csproj",
-        "packagesPath": "C:\\Users\\maxbp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\test\\obj\\",
+        "projectPath": "/home/isomet/src/cg-supervisor/test/test.csproj",
+        "packagesPath": "/home/isomet/.nuget/packages/",
+        "outputPath": "/home/isomet/src/cg-supervisor/test/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\maxbp\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/home/isomet/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -117,8 +103,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj": {
-                "projectPath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj"
+              "/home/isomet/src/cg-supervisor/furnace/furnace.csproj": {
+                "projectPath": "/home/isomet/src/cg-supervisor/furnace/furnace.csproj"
               }
             }
           }
@@ -149,30 +135,12 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.19, 8.0.19]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.19, 8.0.19]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.19, 8.0.19]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.19, 8.0.19]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

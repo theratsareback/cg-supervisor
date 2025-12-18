@@ -10,7 +10,7 @@ public class FurnaceScheduler : IDisposable
 {
     public List<FurnaceSet> setValues = [];
     public List<FurnaceState> stateValues = [];
-    private List<FurnaceInit>? _furnacesInit = [];
+    public List<FurnaceInit>? _furnacesInit = [];
     public readonly List<Furnace> furnaces = [];
     private readonly List<Channel<FurnaceSet>> _setChannels = [];
     private readonly List<Channel<FurnaceState>> _stateChannels = [];
@@ -112,7 +112,7 @@ public class FurnaceScheduler : IDisposable
             FurnaceState last = default;
             bool sawAny = false;
 
-            while (reader.TryRead(out FurnaceState v)) // should change to peek maybe, don't want to remove latest then sit next loop for new data
+            while (reader.TryRead(out FurnaceState v))
             {
                 last = v;
                 sawAny = true;

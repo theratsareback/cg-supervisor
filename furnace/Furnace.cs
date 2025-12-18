@@ -22,7 +22,7 @@ public class Furnace
     private bool isEnabled = false;
     private readonly ChannelReader<FurnaceSet> _in;
     private readonly ChannelWriter<FurnaceState> _out;
-    private readonly Profile activeProfile;
+    private Profile activeProfile;
     private FurnaceStatus _status;
     private double _setpoint;
     private double _processValue;
@@ -110,33 +110,48 @@ public class Furnace
     {
         try
         {
+            FurnaceSet newSet;
+            newSet = await _in.ReadAsync(token);
             while (!token.IsCancellationRequested)
             {
                 token.ThrowIfCancellationRequested();
 
-                FurnaceSet newSet = await _in.ReadAsync(token);
+                while (_in.TryRead(out var latest))
+                {
+                    newSet = latest;
+                }
 
                 _processValue = GetProcessValue();
                 _status = GetStatus();
 
-                switch (newSet.state)
+                // if (activeProfile.state == ProcessState.Continue)
+                // {
+                //     activeProfile = newSet.setProfile;   
+                // }
+                
+                activeProfile = newSet.setProfile;
+
+                if (activeProfile != null)
                 {
-                    case ProcessState.Continue:
-                        activeProfile.Start();
-                        break;
-                    case ProcessState.Pause:
-                        activeProfile.Pause();
-                        break;
-                    case ProcessState.Stop:
-                        activeProfile.Stop();
-                        break;
+                    switch (newSet.state)
+                    {
+                        case ProcessState.Continue:
+                            activeProfile.Start();
+                            break;
+                        case ProcessState.Pause:
+                            activeProfile.Pause();
+                            break;
+                        case ProcessState.Stop:
+                            activeProfile.Stop();
+                            break;
+                    }
                 }
 
                 if (newSet.manualSetpoint)
                 {
                     _setpoint = newSet.setpoint + newSet.trim;
                 }
-                else
+                else if (activeProfile != null)
                 {
                     _setpoint = activeProfile.GetSetpoint() + newSet.trim; // TODO integrate camera trim here
                 }
@@ -162,8 +177,16 @@ public class Furnace
                 }
 
                 SetSetpoint(_setpoint);
-
-                FurnaceState newState = new FurnaceState(furnaceLabel, activeProfile.Label, _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, activeProfile.state.status, (long)activeProfile.OnTimer.ElapsedSeconds);
+                if (activeProfile != null)
+                {
+                    FurnaceState newState = new FurnaceState(furnaceLabel, activeProfile.Label, _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, activeProfile.state.status, (long)activeProfile.OnTimer.ElapsedSeconds);
+                    _out.TryWrite(newState);
+                }
+                else
+                {
+                    FurnaceState newState = new FurnaceState(furnaceLabel, "None", _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, ProfileStatus.Stopped, 0);
+                    _out.TryWrite(newState);
+                }
             }
         }
         catch (OperationCanceledException)

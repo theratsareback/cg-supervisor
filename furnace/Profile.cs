@@ -171,6 +171,7 @@ public sealed class Profile
     /// </summary>
     public void Start()
     {
+        Console.WriteLine("starting");
         if (state.CurrentType == 3)
         {
             int next = System.Math.Min(state.CurrentIndex + 1, Segments.Count - 1);
@@ -187,6 +188,7 @@ public sealed class Profile
         }
         else if (state.status != ProfileStatus.Running)
         {
+            Console.WriteLine("starting from non-segment pause");
             state = state with
             {
                 CurrentIndex = state.CurrentIndex,

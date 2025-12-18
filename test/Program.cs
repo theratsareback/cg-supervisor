@@ -7,28 +7,44 @@ class Program
 {
     static void Main(string[] args)
     {
+        
         string ip = "192.168.168.222";
-        var testFurnace = new Furnace(1, "PbMO4 furnace 1", 502, ip, 1, ip, ip, 1, 1);
+        var testInit = new FurnaceInit("PbMO4 furnace 1", 1, 502, ip, 1, ip, ip, 1, 1);
 
         string label = "PbMoO4";
 
         var profileHandler = new ProfileHandler();
+        var furnaceScheduler = new FurnaceScheduler();
+        Profile activeProfile;
+        FurnaceSet testSet = default(FurnaceSet);
+        
+        Console.WriteLine("Setup started");
 
         foreach (var profile in profileHandler.profiles)
         {
             if (profile.Label == label)
             {
-                profileHandler.Select(profile);
+                activeProfile = profile;
+                testSet.setProfile = activeProfile;
+                Console.WriteLine(testSet.setProfile.Label);
             }
         }
+        testSet.setpoint = 0;
+        testSet.trim = 0;
+        testSet.manualSetpoint = false;
+        testSet.enable = true;
+        testSet.state = ProcessState.Continue;
         
-        profileHandler.Stop();
-        profileHandler.Start();
+        furnaceScheduler.setValues[0] = testSet;
+        Console.WriteLine("Setup finished");
+        furnaceScheduler.Push();
 
-        testFurnace.Enable();
+
         while (true)
         {
-            testFurnace.SetSetpoint(profileHandler.activeProfile.GetSetpoint());
+            furnaceScheduler.Pull();
+            Console.WriteLine($"SP is {furnaceScheduler.stateValues[0].setpoint}");
         }
+
     }
 }

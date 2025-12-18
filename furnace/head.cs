@@ -72,7 +72,7 @@ public class FurnaceState
     }
 }
 
-public enum ProcessState { Stop, Pause, Continue }
+public enum ProcessState { Stop, Pause, Continue } // rewrite as an event instead of stream
 public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus {Off, OnAck, OffNonAck, OnNonAck}
