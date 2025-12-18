@@ -1,12 +1,9 @@
 namespace furnace;
 
 using System;
-using System.Data;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 /// <summary>
 /// Class <c>Furnace</c> represents one Eurotherm and Camera pair.

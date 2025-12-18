@@ -1,7 +1,4 @@
 namespace furnace;
-using System;
-using System.Net.Sockets;
-using System.Threading;
 
 /// <summary>
 /// Class <c>FurnaceInit</c> is a datatype containing the values to initialize one furnace. This is stored in a .JSON on the backend computers
@@ -76,7 +73,7 @@ public enum ProcessState { Stop, Pause, Continue } // rewrite as an event instea
 public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus { Off, OnAck, OffNonAck, OnNonAck }
-public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile }
+public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile, RequestProfiles, RequestFurnaces }
 
 /// <summary>
 /// Struct <c>FurnaceSet</c> contains the state of the frontend interface

@@ -1,7 +1,5 @@
 namespace furnace;
 using System;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Channels;
 using Newtonsoft.Json;

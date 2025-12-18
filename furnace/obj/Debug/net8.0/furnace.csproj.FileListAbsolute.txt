@@ -23,3 +23,16 @@ Z:/Code Projects/Eurotherm Control/furnace/obj/Debug/net8.0/ref/furnace.dll
 /home/isomet/src/cg-supervisor/furnace/obj/Debug/net8.0/refint/furnace.dll
 /home/isomet/src/cg-supervisor/furnace/obj/Debug/net8.0/furnace.pdb
 /home/isomet/src/cg-supervisor/furnace/obj/Debug/net8.0/ref/furnace.dll
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\bin\Debug\net8.0\furnace.deps.json
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\bin\Debug\net8.0\furnace.dll
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\bin\Debug\net8.0\furnace.pdb
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.csproj.AssemblyReference.cache
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.AssemblyInfoInputs.cache
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.AssemblyInfo.cs
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.csproj.CoreCompileInputs.cache
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.sourcelink.json
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.dll
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\refint\furnace.dll
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\furnace.pdb
+C:\Users\maxbp\Shared\Code Projects\cg-supervisor\furnace\obj\Debug\net8.0\ref\furnace.dll
