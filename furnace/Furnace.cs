@@ -1,17 +1,12 @@
 namespace furnace;
 
 using System;
+using System.Data;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-
-public class InvalidFurnaceException : Exception
-{
-    public InvalidFurnaceException() : base("Entered furnace is not valid.") { }
-    public InvalidFurnaceException(string message) : base(message) { }
-}
 
 /// <summary>
 /// Class <c>Furnace</c> represents one Eurotherm and Camera pair.
@@ -19,15 +14,26 @@ public class InvalidFurnaceException : Exception
 public class Furnace
 {
     public int index;
+    public string furnaceLabel;
     private Eurotherm Controller;
     private StepperController? stepper;
     private Capture? camera;
     private CancellationTokenSource? _cts;
     private bool isEnabled = false;
+    private readonly ChannelReader<FurnaceSet> _in;
+    private readonly ChannelWriter<FurnaceState> _out;
+    private readonly Profile activeProfile;
+    private FurnaceStatus _status;
+    private double _setpoint;
+    private double _processValue;
+    private AlarmStatus _underrange, _overrange, _sensor, _rsp;
 
     public Furnace(FurnaceInit init, Channel<FurnaceSet> setChannel, Channel<FurnaceState> stateChannel, int _index)
     {
         index = _index;
+        _in = setChannel;
+        _out = stateChannel;
+        furnaceLabel = init.furnaceLabel;
         Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
         Controller.Connect();
         //camera = new Capture(camIp, camPort);
@@ -102,34 +108,68 @@ public class Furnace
 
     public async Task Run(CancellationToken token)
     {
-        // ProfileHandler handler = new ProfileHandler();
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                token.ThrowIfCancellationRequested();
 
-        // while (!token.IsCancellationRequested)
-        // {
-        //     FurnaceState setState = await loopIn.Reader.ReadAsync(token);
-        //     handler.activeProfile = setState.activeProfile;
+                FurnaceSet newSet = await _in.ReadAsync(token);
 
-        //     if (setState.isRunning)
-        //     {
-        //         handler.Start();
-        //         Enable();
-        //     }
-        //     else if (setState.stopped)
-        //     {
-        //         handler.Stop();
-        //         Disable();
-        //     }
-        //     else
-        //     {
-        //         handler.Pause();
-        //         Enable();
-        //     }
-        //     if (!setState.stopped)
-        //     {
-        //         setState.setpoint = handler.activeProfile.GetSetpoint();
-        //         SetSetpoint(setState.trim + setState.setpoint);
-        //     }
-        //     setState.processValue = GetProcessValue();
-        // }
+                _processValue = GetProcessValue();
+                _status = GetStatus();
+
+                switch (newSet.state)
+                {
+                    case ProcessState.Continue:
+                        activeProfile.Start();
+                        break;
+                    case ProcessState.Pause:
+                        activeProfile.Pause();
+                        break;
+                    case ProcessState.Stop:
+                        activeProfile.Stop();
+                        break;
+                }
+
+                if (newSet.manualSetpoint)
+                {
+                    _setpoint = newSet.setpoint + newSet.trim;
+                }
+                else
+                {
+                    _setpoint = activeProfile.GetSetpoint() + newSet.trim; // TODO integrate camera trim here
+                }
+
+                if (newSet.enable)
+                {
+                    Enable();
+                }
+
+                if (_status == FurnaceStatus.Alarm)
+                {
+                    _overrange = GetAlarm(0);
+                    _underrange = GetAlarm(1);
+                    _sensor = GetAlarm(2);
+                    _rsp = GetAlarm(3);
+                }
+                else
+                {
+                    _overrange = AlarmStatus.Off;
+                    _underrange = AlarmStatus.Off;
+                    _sensor = AlarmStatus.Off;
+                    _rsp = AlarmStatus.Off;
+                }
+
+                SetSetpoint(_setpoint);
+
+                FurnaceState newState = new FurnaceState(furnaceLabel, activeProfile.Label, _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, activeProfile.state.status, (long)activeProfile.OnTimer.ElapsedSeconds);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // normal shutdown path
+        }
     }
+    
 }

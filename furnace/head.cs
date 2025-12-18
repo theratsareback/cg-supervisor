@@ -41,22 +41,21 @@ public class FurnaceState
 {
     public bool _active;
     public string? furnaceLabel;
-    public string? profileName;
     public double processValue;
     public double setpoint;
+    public double heaterCurrent;
     public FurnaceStatus status;
     public AlarmStatus underrangeAlarm;
     public AlarmStatus overrangeAlarm;
     public AlarmStatus sensorBreak;
     public AlarmStatus rspFailure;
-    public ProcessState state;
+    public ProfileStatus state;
     public long time_s;
 
-    public FurnaceState(string _furnaceLabel, string _profileName, double _processValue, double _setpoint, FurnaceStatus _status, AlarmStatus _underrange, AlarmStatus _overrange, AlarmStatus _sensor, AlarmStatus _rsp, ProcessState _state, long _time_s)
+    public FurnaceState(string _furnaceLabel, string _profileName, double _processValue, double _setpoint, FurnaceStatus _status, AlarmStatus _underrange, AlarmStatus _overrange, AlarmStatus _sensor, AlarmStatus _rsp, ProfileStatus _state, long _time_s)
     {
         _active = true;
         furnaceLabel = _furnaceLabel;
-        profileName = _profileName;
         processValue = _processValue;
         setpoint = _setpoint;
         status = _status;
@@ -73,7 +72,8 @@ public class FurnaceState
     }
 }
 
-public enum ProcessState { None, Pause, Resume }
+public enum ProcessState { Stop, Pause, Continue }
+public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus {Off, OnAck, OffNonAck, OnNonAck}
 
@@ -84,6 +84,8 @@ public struct FurnaceSet
 {
     public double setpoint;
     public double trim;
+    public bool manualSetpoint;
+    public bool enable;
     public ProcessState state;
     public Profile? setProfile;
     // TODO motor speeds and alarm acknowledgements

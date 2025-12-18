@@ -99,10 +99,11 @@ public class Heater
     public FurnaceStatus CheckHeaterStatus()
     {
         ushort[] alarminterlocks = _modbusMaster.ReadHoldingRegisters(_slaveId, 8120, 1);
-        ushort[] enableinterlocks = _modbusMaster.ReadHoldingRegisters(_slaveId, 1990, 1);
-
         if (alarminterlocks[0] == 1) { return FurnaceStatus.Alarm; }
+        
+        ushort[] enableinterlocks = _modbusMaster.ReadHoldingRegisters(_slaveId, 1990, 1);
         if (enableinterlocks[0] == 1) { return FurnaceStatus.Disabled; }
+
         else { return FurnaceStatus.Enabled; }
     }
 

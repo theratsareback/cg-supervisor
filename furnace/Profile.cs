@@ -15,7 +15,7 @@ public class Segment
 public readonly record struct ProfileState(
     int CurrentIndex,
     double LastOut,
-    bool IsPaused,
+    ProfileStatus status,
     byte CurrentType
 );
 
@@ -27,6 +27,9 @@ public readonly record struct EvalOutput(
     CoordinatorEffect Effect
 );
 
+/// <summary>
+/// This is all ai-generated but seems to work, start debugging from here if there are any problems with profile logic
+/// </summary>
 public static class ProfileMath
 {
     public static EvalOutput Evaluate(
@@ -34,10 +37,11 @@ public static class ProfileMath
         ulong nowMs,
         ProfileState state
     )
+    
     {
         if (segments.Count == 0)
         {
-            var empty = state with { CurrentIndex = 0, LastOut = 0, IsPaused = false, CurrentType = 0 };
+            var empty = state with { CurrentIndex = 0, LastOut = 0, status = ProfileStatus.Paused, CurrentType = 0 };
             return new EvalOutput(0, empty, CoordinatorEffect.None);
         }
 
@@ -68,7 +72,7 @@ public static class ProfileMath
                     var next = new ProfileState(
                         CurrentIndex: i,
                         LastOut: lastOut,
-                        IsPaused: true,
+                        status: ProfileStatus.Paused,
                         CurrentType: seg.Type
                     );
                     return new EvalOutput(lastOut, next, CoordinatorEffect.Pause);
@@ -89,7 +93,7 @@ public static class ProfileMath
                 if (seg.Type == 3)
                 {
                     // Defensive: timed pause holds and requests a pause
-                    var nextPause = new ProfileState(i, lastOut, true, seg.Type);
+                    var nextPause = new ProfileState(i, lastOut, ProfileStatus.Paused, seg.Type);
                     return new EvalOutput(lastOut, nextPause, CoordinatorEffect.Pause);
                 }
 
@@ -97,7 +101,7 @@ public static class ProfileMath
                 double frac = tInto / (double)segDur;
                 double setpoint = lastOut + (seg.Endpoint - lastOut) * frac;
 
-                var nextRun = new ProfileState(i, lastOut, false, seg.Type);
+                var nextRun = new ProfileState(i, lastOut, ProfileStatus.Running, seg.Type);
                 return new EvalOutput(setpoint, nextRun, CoordinatorEffect.None);
             }
 
@@ -111,7 +115,7 @@ public static class ProfileMath
         var endState = new ProfileState(
             CurrentIndex: segments.Count - 1,
             LastOut: lastOut,
-            IsPaused: false,
+            status: ProfileStatus.Stopped,
             CurrentType: segments[^1].Type
         );
         return new EvalOutput(lastOut, endState, CoordinatorEffect.None);
@@ -119,72 +123,39 @@ public static class ProfileMath
 }
 
 
-/// <summary>
-/// State-machine coordinator 
-/// </summary>
 public sealed class Profile
 {
-    public string? Label { get; init; }
+    public string Label { get; init; }
     public List<Segment> Segments { get; } = new();
     public Timer OnTimer { get; set; } = new();
 
-    // Public flags (optional) if you want visibility similar to your original class:
-    [JsonIgnore] public byte Type => _state.CurrentType;
-    [JsonIgnore] public bool SegmentPause => _state.IsPaused;
+    [JsonIgnore] public byte Type => state.CurrentType;
 
-    private ProfileState _state = new(CurrentIndex: 0, LastOut: 0, IsPaused: false, CurrentType: 0);
+    public ProfileState state = new(CurrentIndex: 0, LastOut: 0, status: ProfileStatus.Paused, CurrentType: 0);
 
     /// <summary>
-    /// Reads the clock, calls the PURE evaluator, applies any side-effects, and commits NextState.
+    /// Get current setpoint according to profile
     /// </summary>
     public double GetSetpoint()
     {
         var now = OnTimer.ElapsedMsForProfile();
-        var output = ProfileMath.Evaluate(Segments, now, _state);
+        var output = ProfileMath.Evaluate(Segments, now, state);
 
-        // Apply requested side-effects
         switch (output.Effect)
         {
             case CoordinatorEffect.Pause:
-                OnTimer.Pause();
+                Pause();
                 break;
             case CoordinatorEffect.Resume:
-                OnTimer.Start();
+                Start();
                 break;
             case CoordinatorEffect.None:
             default:
                 break;
         }
 
-        // Commit next state
-        _state = output.NextState;
+        state = output.NextState;
         return output.Setpoint;
-    }
-
-    /// <summary>
-    /// Skip the current segment. If on a pause segment, resume timer and move to the next.
-    /// Ignores other segment types.
-    /// </summary>
-    public void Skip()
-    {
-        if (Segments.Count == 0) return;
-
-        if (_state.CurrentType == 3)
-        {
-            int next = System.Math.Min(_state.CurrentIndex + 1, Segments.Count - 1);
-            // Set LastOut to the segment we just left (i), which ends at its Endpoint
-            double lastOut = (next > 0) ? Segments[next - 1].Endpoint : _state.LastOut;
-
-            _state = _state with
-            {
-                CurrentIndex = next,
-                LastOut = lastOut,
-                IsPaused = false,
-                CurrentType = Segments[next].Type
-            };
-
-            OnTimer.Start();
-        }
     }
 
     /// <summary>
@@ -192,74 +163,40 @@ public sealed class Profile
     /// </summary>
     public void Reset(double initialOut = 0)
     {
-        _state = new ProfileState(0, initialOut, false, 0);
-        OnTimer.Start();
-    }
-}
-
-public class ProfileHandler
-{
-    private const string FilePath = @"profiles.json";
-    public List<Profile> profiles = [];
-    public Profile? activeProfile;
-    public bool isRunning;
-    public bool stopped;
-
-    /// <summary>
-    /// Instantiates a profileHander object and imports profiles from a .json.
-    /// </summary>
-    public ProfileHandler()
-    {
-        if (!File.Exists(FilePath))
-        {
-            File.WriteAllText(FilePath, "[]"); // if file doesn't exist, make one with an empty list
-        }
-
-        profiles = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(FilePath)) ?? [];
-        return;
+        state = new ProfileState(0, Segments[0].Endpoint, ProfileStatus.Stopped, 0);
     }
 
     /// <summary>
-    /// Add a profile to the persistent list of profiles.
-    /// Does NOT overwrite profiles with the same label.
-    /// </summary>
-    public void AddProfile(Profile profile)
-    {
-        profiles.Add(profile);
-        string json = JsonConvert.SerializeObject(profiles, Formatting.Indented);
-        File.WriteAllText(FilePath, json);
-    }
-
-    /// <summary>
-    /// Removes a profile from the persistent list of profiles.
-    /// </summary>
-    public void RemoveProfile(Profile profile)
-    {
-        profiles.Remove(profile);
-        string json = JsonConvert.SerializeObject(profiles, Formatting.Indented);
-        File.WriteAllText(FilePath, json);
-    }
-
-    /// <summary>
-    /// Set a profile as the active profile for this furnace.
-    /// </summary>
-    public void Select(Profile profile)
-    {
-        activeProfile = profile;
-    }
-
-    /// <summary>
-    /// Start (or resume) active profile timebase
-    /// Use activeProfile.Skip() to resume from a program pause
+    /// Start (or resume) active profile timebase.
     /// </summary>
     public void Start()
     {
-        if (!isRunning)
+        if (state.CurrentType == 3)
         {
-            activeProfile?.OnTimer.Start();
-            isRunning = true;
-            stopped = false;
+            int next = System.Math.Min(state.CurrentIndex + 1, Segments.Count - 1);
+            double lastOut = (next > 0) ? Segments[next - 1].Endpoint : state.LastOut;
+
+            state = state with
+            {
+                CurrentIndex = next,
+                LastOut = lastOut,
+                status = ProfileStatus.Running,
+                CurrentType = Segments[next].Type
+            };
+            OnTimer.Start();
         }
+        else if (state.status != ProfileStatus.Running)
+        {
+            state = state with
+            {
+                CurrentIndex = state.CurrentIndex,
+                LastOut = state.LastOut,
+                status = ProfileStatus.Running,
+                CurrentType = state.CurrentType
+            };
+            OnTimer.Start();
+        }
+        // does nothing if not paused or on a pause segment
     }
 
     /// <summary>
@@ -267,11 +204,17 @@ public class ProfileHandler
     /// </summary>
     public void Pause()
     {   
-        if (isRunning)
+        if (state.status != ProfileStatus.Paused)
         {
-            activeProfile?.OnTimer.Pause();
-            isRunning = false;
-            stopped = false;
+            OnTimer.Pause();
+
+            state = state with
+            {
+                CurrentIndex = state.CurrentIndex,
+                LastOut = state.LastOut,
+                status = ProfileStatus.Paused,
+                CurrentType = state.CurrentType
+            };
         }
     }
 
@@ -279,13 +222,12 @@ public class ProfileHandler
     /// Pauses and resets current profile timebase
     /// </summary>
     public void Stop()
-    {
-        if (stopped)
-        {  
-            activeProfile?.OnTimer.Pause();
-            activeProfile?.OnTimer.Reset();
-            isRunning = false;
-            stopped = true;
+    {   
+        if (state.status != ProfileStatus.Stopped)
+        {
+            OnTimer.Pause();
+            OnTimer.Reset();
+            Reset();
         }
     }
 }
