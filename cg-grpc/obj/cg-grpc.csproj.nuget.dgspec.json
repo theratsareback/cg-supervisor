@@ -1,30 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj": {}
+    "C:\\Users\\maxbp\\cg-supervisor\\cg-grpc\\cg-grpc.csproj": {}
   },
   "projects": {
-    "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj": {
+    "C:\\Users\\maxbp\\cg-supervisor\\cg-grpc\\cg-grpc.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj",
-        "projectName": "furnace",
-        "projectPath": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj",
+        "projectUniqueName": "C:\\Users\\maxbp\\cg-supervisor\\cg-grpc\\cg-grpc.csproj",
+        "projectName": "cg-grpc",
+        "projectPath": "C:\\Users\\maxbp\\cg-supervisor\\cg-grpc\\cg-grpc.csproj",
         "packagesPath": "C:\\Users\\maxbp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\obj\\",
+        "outputPath": "C:\\Users\\maxbp\\cg-supervisor\\cg-grpc\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\maxbp\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net8.0"
+          "net9.0"
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
+          "net9.0": {
+            "targetAlias": "net9.0",
             "projectReferences": {}
           }
         },
@@ -41,24 +41,12 @@
         "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net9.0": {
+          "targetAlias": "net9.0",
           "dependencies": {
-            "NModbus": {
+            "Grpc.AspNetCore": {
               "target": "Package",
-              "version": "[3.0.81, )"
-            },
-            "Newtonsoft.Json": {
-              "target": "Package",
-              "version": "[13.0.3, )"
-            },
-            "OpenCvSharp4": {
-              "target": "Package",
-              "version": "[4.11.0.20250507, )"
-            },
-            "OpenCvSharp4.runtime.win": {
-              "target": "Package",
-              "version": "[4.11.0.20250507, )"
+              "version": "[2.64.0, )"
             }
           },
           "imports": [
@@ -72,21 +60,10 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.16, 8.0.16]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.16, 8.0.16]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.16, 8.0.16]"
-            }
-          ],
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
