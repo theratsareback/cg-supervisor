@@ -1,4 +1,4 @@
-namespace furnace;
+namespace furnace.eurotherm;
 using System;
 using System.Threading;
 using System.Threading.Channels;

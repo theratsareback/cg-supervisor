@@ -1,3 +1,5 @@
+using furnace.profile;
+
 namespace furnace;
 
 /// <summary>
@@ -89,15 +91,17 @@ public struct FurnaceSet
     // TODO motor speeds and alarm acknowledgements
 }
 
-
+/// <summary>
+/// Represents a discrete event and object to be used for event
+/// </summary>
 public class Event<T>
 {
     public EventType type;
-    public T? Data { get; }
+    public T? EventObject;
 
-    public Event(EventType _type, T obj)
+    public Event(EventType _type, T? obj = default)
     {
         type = _type;
-        Data = obj;
+        EventObject = obj;
     }
 }

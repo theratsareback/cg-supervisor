@@ -1,9 +1,13 @@
-namespace furnace;
+namespace furnace.eurotherm;
 
 using System;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+
+using furnace.profile;
+using furnace.stepper;
+using furnace.camera;
 
 /// <summary>
 /// Class <c>Furnace</c> represents one Eurotherm and Camera pair.

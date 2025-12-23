@@ -1,4 +1,5 @@
-﻿namespace furnace;
+﻿namespace furnace.eurotherm;
+
 using System;
 using System.Net.Sockets;
 using System.Threading;
