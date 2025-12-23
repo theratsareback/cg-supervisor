@@ -1,4 +1,4 @@
-namespace furnace;
+namespace furnace.profile;
 using Newtonsoft.Json;
 
 public class ProfileHandler

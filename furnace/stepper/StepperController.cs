@@ -1,4 +1,4 @@
-namespace furnace;
+namespace furnace.stepper;
 
 using System;
 using System.Net.Sockets;

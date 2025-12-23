@@ -1,4 +1,4 @@
-namespace furnace;
+namespace furnace.camera;
 
 using System;
 using OpenCvSharp;
