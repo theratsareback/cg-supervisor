@@ -130,7 +130,7 @@ public class Furnace
                 //     activeProfile = newSet.setProfile;   
                 // }
                 
-                activeProfile = newSet.setProfile;
+                activeProfile = new Profile(newSet.setProfile);
 
                 if (activeProfile != null)
                 {

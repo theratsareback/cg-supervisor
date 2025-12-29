@@ -3,17 +3,9 @@ namespace furnace.camera;
 using System;
 using OpenCvSharp;
 
-public class Circle
-{
-    public Point2f Center { get; set; }
-    public float Radius { get; set; }
-    public double AccumulatorScore { get; set; } // Optional
-    public DateTime Timestamp { get; set; }
-}
-
 public class Capture(string ipAddress, int port)
 {
-    private readonly string _rtspUrl = $"rtsp://{ipAddress}:{port}/stream1";
+    private readonly string _rtspUrl = $"rtsp://{ipAddress}:{port}/cam";
     private Mat _latestFrame = new Mat();
     private Circle _bestFit = new Circle();
     private readonly object _frameLock = new object();
@@ -33,6 +25,9 @@ public class Capture(string ipAddress, int port)
         _cts?.Cancel();
     }
 
+    /// <summary>
+    /// use ONLY for debug. Frame copy is exceedingly slow
+    /// </summary>
     public Mat? GetLatestFrame()
     {
         lock (_frameLock)
@@ -59,12 +54,13 @@ public class Capture(string ipAddress, int port)
         _streamIsActive = true;
         StreamStarted?.Invoke(this, EventArgs.Empty);
 
-        var frame = new Mat();
+        //var frame = new Mat();
 
         while (!token.IsCancellationRequested)
         {
             try
             {
+                var frame = new Mat();
                 if (!capture.Read(frame) || frame.Empty())
                 {
                     if (_streamIsActive)
@@ -110,6 +106,13 @@ public class Capture(string ipAddress, int port)
         if (circle != null)
         {
             _bestFit = circle;
+        }
+        else
+        {
+            _bestFit.Center = new Point2f(0, 0);
+            _bestFit.Radius = 0;
+            _bestFit.AccumulatorScore = 0;
+            _bestFit.Timestamp = DateTime.UtcNow;
         }
         return input;
     }

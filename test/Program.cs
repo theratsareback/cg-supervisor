@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 
 using furnace;
 using furnace.profile;
+using furnace.eurotherm;
+using furnace.camera;
 
 class Program
 {
@@ -17,15 +19,15 @@ class Program
 
         var profileHandler = new ProfileHandler();
         var furnaceScheduler = new FurnaceScheduler();
-        Profile activeProfile;
+        ProfileDef activeProfile;
         FurnaceSet testSet = default(FurnaceSet);
         
 
-        foreach (var profile in profileHandler.profiles)
+        foreach (var profileDef in profileHandler.profiles)
         {
-            if (profile.Label == label)
+            if (profileDef.Label == label)
             {
-                activeProfile = profile;
+                activeProfile = profileDef;
                 testSet.setProfile = activeProfile;
                 Console.WriteLine(testSet.setProfile.Label);
             }
@@ -37,7 +39,8 @@ class Program
         testSet.state = ProcessState.Continue;
         
         furnaceScheduler.setValues[0] = testSet;
-
+        
+        Capture cap = new Capture("invalid", 10294);
 
         while (true)
         {

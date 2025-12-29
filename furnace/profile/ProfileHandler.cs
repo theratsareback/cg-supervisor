@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 public class ProfileHandler
 {
     private const string FilePath = @"profiles.json";
-    public List<Profile> profiles = [];
+    public List<ProfileDef> profiles = [];
     public Profile? activeProfile;
 
     /// <summary>
@@ -17,7 +17,7 @@ public class ProfileHandler
             File.WriteAllText(FilePath, "[]"); // if file doesn't exist, make one with an empty list
         }
 
-        profiles = JsonConvert.DeserializeObject<List<Profile>>(File.ReadAllText(FilePath)) ?? [];
+        profiles = JsonConvert.DeserializeObject<List<ProfileDef>>(File.ReadAllText(FilePath)) ?? [];
         return;
     }
 
@@ -25,7 +25,7 @@ public class ProfileHandler
     /// Add a profile to the persistent list of profiles.
     /// Does NOT overwrite profiles with the same label.
     /// </summary>
-    public void AddProfile(Profile profile)
+    public void AddProfile(ProfileDef profile)
     {
         profiles.Add(profile);
         string json = JsonConvert.SerializeObject(profiles, Formatting.Indented);
@@ -35,16 +35,16 @@ public class ProfileHandler
     /// <summary>
     /// Removes a profile from the persistent list of profiles.
     /// </summary>
-    public void RemoveProfile(Profile profile)
+    public void RemoveProfile(ProfileDef profile)
     {
         profiles.Remove(profile);
         string json = JsonConvert.SerializeObject(profiles, Formatting.Indented);
         File.WriteAllText(FilePath, json);
     }
 
-    public void ModifyProfile(Profile profile)
+    public void ModifyProfile(ProfileDef profile)
     {
-        foreach (Profile oldprofile in profiles)
+        foreach (ProfileDef oldprofile in profiles)
         {
             if (oldprofile.profileIndex == profile.profileIndex)
             {

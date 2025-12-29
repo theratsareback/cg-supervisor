@@ -1,9 +1,10 @@
-using furnace.profile;
+using OpenCvSharp;
 
 namespace furnace;
 
 /// <summary>
-/// Class <c>FurnaceInit</c> is a datatype containing the values to initialize one furnace. This is stored in a .JSON on the backend computers
+/// Class <c>FurnaceInit</c> is a datatype containing the values to initialize one furnace. This is stored in a .JSON on the backend computers.
+/// To create a new furnace, an instance of this object must be created on the frontend and sent to the backend.
 /// </summary>
 public class FurnaceInit
 {
@@ -34,7 +35,7 @@ public class FurnaceInit
 }
 
 /// <summary>
-/// Class <c>FurnaceState</c> contains information about a single furnace's current state
+/// Class <c>FurnaceState</c> contains information about a single furnace's current state, to be sent to the frontend
 /// </summary>
 public class FurnaceState
 {
@@ -71,14 +72,15 @@ public class FurnaceState
     }
 }
 
-public enum ProcessState { Stop, Pause, Continue } // rewrite as an event instead of stream
+public enum ProcessState { Stop, Pause, Continue } // need to rewrite as an event instead of stream
 public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus { Off, OnAck, OffNonAck, OnNonAck }
 public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile, RequestProfiles, RequestFurnaces }
 
 /// <summary>
-/// Struct <c>FurnaceSet</c> contains the state of the frontend interface
+/// Struct <c>FurnaceSet</c> contains the state of the frontend interface to be streamed to the backend.
+/// Old information is ignored. Used only to convey continuous data.
 /// </summary>
 public struct FurnaceSet
 {
@@ -87,12 +89,13 @@ public struct FurnaceSet
     public bool manualSetpoint;
     public bool enable;
     public ProcessState state;
-    public Profile? setProfile;
+    public ProfileDef? setProfile;
     // TODO motor speeds and alarm acknowledgements
 }
 
 /// <summary>
-/// Represents a discrete event and object to be used for event
+/// Represents a discrete event and object to be used for the event.
+/// These are processed in a queue. No event is ignored.
 /// </summary>
 public class Event<T>
 {
@@ -104,4 +107,38 @@ public class Event<T>
         type = _type;
         EventObject = obj;
     }
+}
+
+/// <summary>
+/// circle.
+/// </summary>
+public class Circle
+{
+    public Point2f Center { get; set; }
+    public float Radius { get; set; }
+    public double AccumulatorScore { get; set; }
+    public DateTime Timestamp { get; set; }
+}
+
+/// <summary>
+/// JSON convertable profile definition to be handed to profile handler
+/// </summary>
+public sealed class ProfileDef
+{
+    public string Label { get; init; }
+    public int profileIndex;
+    public List<Segment> Segments { get; } = new();
+}
+
+/// <summary>
+/// Represents one segment of a profile
+/// </summary>
+public class Segment
+{
+    public byte Type { get; set; }
+    // Type 1 is ramp, 2 is dwell, 3 is pause
+    public byte Index { get; set; }
+    public uint Duration { get; set; }
+    public double Endpoint { get; set; }
+
 }

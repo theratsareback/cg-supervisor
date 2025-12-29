@@ -1,16 +1,7 @@
 namespace furnace.profile;
+using furnace;
 
 using Newtonsoft.Json;
-
-public class Segment
-{
-    public byte Type { get; set; }
-    // Type 1 is ramp, 2 is dwell, 3 is pause
-    public byte Index { get; set; }
-    public uint Duration { get; set; }
-    public double Endpoint { get; set; }
-
-}
 
 public readonly record struct ProfileState(
     int CurrentIndex,
@@ -123,16 +114,21 @@ public static class ProfileMath
 }
 
 
-public sealed class Profile
+public sealed partial class Profile
 {
     public string Label { get; init; }
-    public int profileIndex;
     public List<Segment> Segments { get; } = new();
     public Timer OnTimer { get; set; } = new();
 
     [JsonIgnore] public byte Type => state.CurrentType;
 
     public ProfileState state = new(CurrentIndex: 0, LastOut: 0, Status: ProfileStatus.Paused, CurrentType: 0);
+
+    public Profile(ProfileDef def)
+    {
+        Segments = def.Segments;
+        Label = def.Label;
+    }
 
     /// <summary>
     /// Get current setpoint according to profile
@@ -172,9 +168,9 @@ public sealed class Profile
     /// </summary>
     public void Start()
     {
-        Console.WriteLine("starting");
         if (state.CurrentType == 3)
         {
+            Console.WriteLine("starting");
             int next = System.Math.Min(state.CurrentIndex + 1, Segments.Count - 1);
             double lastOut = (next > 0) ? Segments[next - 1].Endpoint : state.LastOut;
 
