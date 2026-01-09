@@ -1,14 +1,16 @@
 namespace furnace.eurotherm;
 using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Channels;
 using Newtonsoft.Json;
+using OpenCvSharp;
 
 public class FurnaceScheduler : IDisposable
 {
     public List<FurnaceSet> setValues = [];
     public List<FurnaceState> stateValues = [];
-    public List<FurnaceInit>? _furnacesInit = [];
+    public List<FurnaceInit> _furnacesInit = [];
     public readonly List<Furnace> furnaces = [];
     private readonly List<Channel<FurnaceSet>> _setChannels = [];
     private readonly List<Channel<FurnaceState>> _stateChannels = [];
@@ -29,13 +31,14 @@ public class FurnaceScheduler : IDisposable
             File.WriteAllText(@"furnaces.json", "[]"); // if file doesn't exist, make one with an empty list
         }
 
-        _furnacesInit = JsonConvert.DeserializeObject<List<FurnaceInit>>(File.ReadAllText(@"furnaces.json"));
-        _furnacesInit ??= [];
+        var inits = JsonConvert.DeserializeObject<List<FurnaceInit>>(File.ReadAllText(@"furnaces.json"));
+        inits ??= [];
+        _furnacesInit = inits;
 
         int i = 0;
         foreach (FurnaceInit init in _furnacesInit)
         {
-            NewFurnace(init, i);
+            NewFurnace(init);
             i++;
         }
     }
@@ -44,13 +47,8 @@ public class FurnaceScheduler : IDisposable
     /// Method <c>NewFurnace</c> is used to add a new furnace to the system. 
     /// </summary>
     /// <param name="init">Init struct containing information for new furnace</param>
-    public void NewFurnace(FurnaceInit init, int index = -1)
+    public void NewFurnace(FurnaceInit init)
     {
-        if (index < 0)
-        {
-            index = furnaces.Count;
-        }
-
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token);
         var setChannel = Channel.CreateBounded<FurnaceSet>(opts);
         var stateChannel = Channel.CreateBounded<FurnaceState>(opts);
@@ -60,12 +58,21 @@ public class FurnaceScheduler : IDisposable
         stateValues.Add(new FurnaceState());
 
         _furnacesInit ??= [];
-        Furnace furnace = new Furnace(init, setChannel, stateChannel, index);
+        Furnace furnace = new Furnace(init, setChannel, stateChannel);
         furnaces.Add(furnace);
         if (!_furnacesInit.Contains(init))
         {
             _furnacesInit.Add(init);
-            // TODO save changes in JSON and ignore furnaces with index -1
+            List<FurnaceInit> actives = [];
+            foreach (FurnaceInit i in _furnacesInit)
+            {
+                if (i.index >= 0)
+                {
+                    actives.Add(i);
+                }
+            }
+            string inits = JsonConvert.SerializeObject(actives);
+            File.WriteAllText(@"furnaces.json", inits);
         }
 
         _workerTasks.Add(furnace.Run(cts.Token));
@@ -78,7 +85,20 @@ public class FurnaceScheduler : IDisposable
     /// <param name="init">Init struct containing new information for furnace</param>
     public void ModifyFurnace(int index, FurnaceInit init)
     {
-        //TODO implement
+        CancelWorker(index);
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token);
+        var setChannel = _setChannels[index];
+        var stateChannel = _stateChannels[index];
+
+        Furnace furnace = new Furnace(init, setChannel, stateChannel);
+        furnaces[index] = furnace;
+
+        _workerTasks[index] = furnace.Run(cts.Token);
+        _workerCts[index] = cts;
+        _furnacesInit[index] = init;
+
+        string inits = JsonConvert.SerializeObject(_furnacesInit);
+        File.WriteAllText(@"furnaces.json", inits);
     }
     
     public void RemoveFurnace(int index)
@@ -87,6 +107,27 @@ public class FurnaceScheduler : IDisposable
         _furnacesInit[index].index = -1;
         CancelWorker(index);
         stateValues[index]._active = false;
+
+        List<FurnaceInit> actives = [];
+        foreach (FurnaceInit i in _furnacesInit)
+        {
+            if (i.index >= 0)
+            {
+                actives.Add(i);
+            }
+        }
+        string inits = JsonConvert.SerializeObject(actives);
+        File.WriteAllText(@"furnaces.json", inits);
+    }
+
+    /// <summary>
+    /// Get list of inits for existing furnaces
+    /// </summary>
+    public List<FurnaceInit> GetInits()
+    {
+        List<FurnaceInit>? inits = JsonConvert.DeserializeObject<List<FurnaceInit>>(File.ReadAllText(@"furnaces.json"));
+        inits ??= [];
+        return inits;
     }
 
     /// <summary>
@@ -124,7 +165,7 @@ public class FurnaceScheduler : IDisposable
     /// <summary>
     /// Cancels a single furnace worker, given the furnace index for that worker
     /// </summary>
-    public void CancelWorker(int index, bool closeChannels = true)
+    private void CancelWorker(int index, bool closeChannels = true)
     {
         if ((uint)index >= (uint)furnaces.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
@@ -141,7 +182,7 @@ public class FurnaceScheduler : IDisposable
     /// <summary>
     /// Cancels all running furnace workers
     /// </summary>
-    public void CancelAll(bool closeChannels = true)
+    private void CancelAll(bool closeChannels = true)
     {
         _globalCts.Cancel();
 

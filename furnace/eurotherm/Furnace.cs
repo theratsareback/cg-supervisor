@@ -8,30 +8,56 @@ using System.Threading.Tasks;
 using furnace.profile;
 using furnace.stepper;
 using furnace.camera;
+using Microsoft.VisualBasic;
 
 /// <summary>
-/// Class <c>Furnace</c> represents one Eurotherm and Camera pair.
+/// Class <c>Furnace</c> represents one Eurotherm, camera, and stepper driver.
 /// </summary>
 public class Furnace
 {
-    public int index;
     public string furnaceLabel;
+    public ProcessState state;
     private Eurotherm Controller;
     private StepperController? stepper;
     private Capture? camera;
     private CancellationTokenSource? _cts;
     private bool isEnabled = false;
-    private readonly ChannelReader<FurnaceSet> _in;
-    private readonly ChannelWriter<FurnaceState> _out;
-    private Profile activeProfile;
+    private ChannelReader<FurnaceSet> _in;
+    private ChannelWriter<FurnaceState> _out;
+    private Channel<ProcessState> _statechannel;
+    private Channel<Profile> _profilechannel;
+    private Profile? activeProfile;
     private FurnaceStatus _status;
     private double _setpoint;
     private double _processValue;
     private AlarmStatus _underrange, _overrange, _sensor, _rsp;
+    private object _alarmLock;
+    private readonly BoundedChannelOptions opts = new BoundedChannelOptions(1)
+        {
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = true,
+            SingleWriter = false
+        };
 
-    public Furnace(FurnaceInit init, Channel<FurnaceSet> setChannel, Channel<FurnaceState> stateChannel, int _index)
+    public Furnace(FurnaceInit init, Channel<FurnaceSet> setChannel, Channel<FurnaceState> stateChannel)
     {
-        index = _index;
+        _in = setChannel;
+        _out = stateChannel;
+        furnaceLabel = init.furnaceLabel;
+        Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
+        Controller.Connect();
+        _statechannel = Channel.CreateBounded<ProcessState>(opts);
+        _profilechannel = Channel.CreateBounded<Profile>(opts);
+
+        //camera = new Capture(camIp, camPort);
+        //camera.Start();
+        //TODO MOTORS
+        return;
+    
+    }
+
+    public void ModifyFurnace(FurnaceInit init, Channel<FurnaceSet> setChannel, Channel<FurnaceState> stateChannel)
+    {
         _in = setChannel;
         _out = stateChannel;
         furnaceLabel = init.furnaceLabel;
@@ -40,8 +66,6 @@ public class Furnace
         //camera = new Capture(camIp, camPort);
         //camera.Start();
         //TODO MOTORS
-        return;
-    
     }
 
     public void SetSetpoint(double setpoint)
@@ -50,7 +74,7 @@ public class Furnace
     }
 
     /// <summary>
-    /// Enable heating element output
+    /// Enable heating element output. Safe to call if already enabled.
     /// </summary>
     public void Enable()
     {   
@@ -62,7 +86,7 @@ public class Furnace
     }
 
     /// <summary>
-    /// Disable heating element output
+    /// Disable heating element output. Safe to call if already disabled.
     /// </summary>
     public void Disable()
     {   
@@ -98,13 +122,26 @@ public class Furnace
     /// <param name="alarmIndex">Identifier for alarms. 0 is overrange alarm,
     ///  1 is underrange, 2 is sensor break, 3 is remote setpoint failure.</param>
     /// <returns>
-    /// 0 if alarm is off, 1 for active but acknowledged, 
-    /// 2 for inactive not acknowledged, 3 for active not acknowledged
     /// </returns>
-    public AlarmStatus GetAlarm(byte alarmIndex)
+    private AlarmStatus GetAlarm(byte alarmIndex)
     {
         AlarmStatus status = Controller.alarms[alarmIndex].GetStatus();
         return status;
+    }
+
+    //TODO make function to safely read alarm values from the async thread
+
+    public void SetProfile(ProfileDef def)
+    {
+        if (activeProfile == null || activeProfile.state.Status == ProfileStatus.Stopped)
+        {
+            _profilechannel.Writer.TryWrite(new(def));
+        }
+    }
+
+    public void SetState(ProcessState newState)
+    {
+        _statechannel.Writer.TryWrite(newState);
     }
 
     public async Task Run(CancellationToken token)
@@ -113,6 +150,9 @@ public class Furnace
         {
             FurnaceSet newSet;
             newSet = await _in.ReadAsync(token);
+            state = await _statechannel.Reader.ReadAsync(token);
+            activeProfile = await _profilechannel.Reader.ReadAsync(token);
+
             while (!token.IsCancellationRequested)
             {
                 token.ThrowIfCancellationRequested();
@@ -125,16 +165,9 @@ public class Furnace
                 _processValue = GetProcessValue();
                 _status = GetStatus();
 
-                // if (activeProfile.state == ProcessState.Continue)
-                // {
-                //     activeProfile = newSet.setProfile;   
-                // }
-                
-                activeProfile = new Profile(newSet.setProfile);
-
                 if (activeProfile != null)
                 {
-                    switch (newSet.state)
+                    switch (state)
                     {
                         case ProcessState.Continue:
                             activeProfile.Start();
@@ -164,17 +197,23 @@ public class Furnace
 
                 if (_status == FurnaceStatus.Alarm)
                 {
-                    _overrange = GetAlarm(0);
-                    _underrange = GetAlarm(1);
-                    _sensor = GetAlarm(2);
-                    _rsp = GetAlarm(3);
+                    lock (_alarmLock)
+                    {
+                        _overrange = GetAlarm(0);
+                        _underrange = GetAlarm(1);
+                        _sensor = GetAlarm(2);
+                        _rsp = GetAlarm(3);
+                    }
                 }
                 else
                 {
-                    _overrange = AlarmStatus.Off;
-                    _underrange = AlarmStatus.Off;
-                    _sensor = AlarmStatus.Off;
-                    _rsp = AlarmStatus.Off;
+                    lock (_alarmLock)
+                    {
+                        _overrange = AlarmStatus.Off;
+                        _underrange = AlarmStatus.Off;
+                        _sensor = AlarmStatus.Off;
+                        _rsp = AlarmStatus.Off;
+                    }
                 }
 
                 SetSetpoint(_setpoint);
@@ -195,5 +234,5 @@ public class Furnace
             // normal shutdown path
         }
     }
-    
+
 }

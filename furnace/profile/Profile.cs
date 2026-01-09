@@ -114,7 +114,7 @@ public static class ProfileMath
 }
 
 
-public sealed partial class Profile
+public sealed class Profile
 {
     public string Label { get; init; }
     public List<Segment> Segments { get; } = new();
@@ -227,6 +227,14 @@ public sealed partial class Profile
             OnTimer.Pause();
             OnTimer.Reset();
             Reset();
+
+            state = state with
+            {
+                CurrentIndex = 0,
+                LastOut = 0,
+                Status = ProfileStatus.Stopped,
+                CurrentType = 2
+            };
         }
     }
 }

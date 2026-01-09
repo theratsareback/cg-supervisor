@@ -1,0 +1,13 @@
+[
+  {
+    "furnaceLabel": "PbMO4 furnace 1",
+    "index": 0,
+    "eurothermPort": 502,
+    "eurothermIp": "192.168.168.222",
+    "cameraPort": 1,
+    "cameraIp": "192.168.168.222",
+    "pullerIp": "192.168.168.222",
+    "pullerSlaveId": 1,
+    "rotaterSlaveId": 1
+  }
+]

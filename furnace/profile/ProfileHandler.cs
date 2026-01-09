@@ -42,15 +42,10 @@ public class ProfileHandler
         File.WriteAllText(FilePath, json);
     }
 
-    public void ModifyProfile(ProfileDef profile)
+    public void ModifyProfile(int index, ProfileDef profile)
     {
-        foreach (ProfileDef oldprofile in profiles)
-        {
-            if (oldprofile.profileIndex == profile.profileIndex)
-            {
-                RemoveProfile(oldprofile);
-                AddProfile(profile);
-            }
-        }
+        profiles[index] = profile;
+        string json = JsonConvert.SerializeObject(profiles, Formatting.Indented);
+        File.WriteAllText(FilePath, json);
     }
 }

@@ -1,3 +1,5 @@
+using System.Reflection.Metadata;
+using System.Text.Json.Serialization;
 using OpenCvSharp;
 
 namespace furnace;
@@ -39,6 +41,9 @@ public class FurnaceInit
 /// </summary>
 public class FurnaceState
 {
+    /// <summary>
+    /// Used to determine if a furnace still exists. If false, the furnace at this index should be ignored.
+    /// </summary>
     public bool _active;
     public string? furnaceLabel;
     public double processValue;
@@ -72,11 +77,18 @@ public class FurnaceState
     }
 }
 
-public enum ProcessState { Stop, Pause, Continue } // need to rewrite as an event instead of stream
+/// <summary>
+/// ProcessState is used to tell a furnace to resume, pause, or stop following the profile.
+/// </summary>
+public enum ProcessState { Stop, Pause, Continue }
+
 public enum ProfileStatus { Running, Paused, Stopped }
+
+/// <summary>
+/// FurnaceStatus communicates whether the furnace is enabled, disabled, or in an alarm state.
+/// </summary>
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus { Off, OnAck, OffNonAck, OnNonAck }
-public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile, RequestProfiles, RequestFurnaces }
 
 /// <summary>
 /// Struct <c>FurnaceSet</c> contains the state of the frontend interface to be streamed to the backend.
@@ -88,25 +100,8 @@ public struct FurnaceSet
     public double trim;
     public bool manualSetpoint;
     public bool enable;
-    public ProcessState state;
-    public ProfileDef? setProfile;
-    // TODO motor speeds and alarm acknowledgements
-}
-
-/// <summary>
-/// Represents a discrete event and object to be used for the event.
-/// These are processed in a queue. No event is ignored.
-/// </summary>
-public class Event<T>
-{
-    public EventType type;
-    public T? EventObject;
-
-    public Event(EventType _type, T? obj = default)
-    {
-        type = _type;
-        EventObject = obj;
-    }
+    // TODO motor speeds
+    //TODO write profile setting and alarm acknowledgements as events
 }
 
 /// <summary>
@@ -126,7 +121,6 @@ public class Circle
 public sealed class ProfileDef
 {
     public string Label { get; init; }
-    public int profileIndex;
     public List<Segment> Segments { get; } = new();
 }
 
@@ -135,8 +129,10 @@ public sealed class ProfileDef
 /// </summary>
 public class Segment
 {
+    /// <summary>
+    /// Type 1 is a ramp segment, 2 is dwell, 3 is pause
+    /// </summary>
     public byte Type { get; set; }
-    // Type 1 is ramp, 2 is dwell, 3 is pause
     public byte Index { get; set; }
     public uint Duration { get; set; }
     public double Endpoint { get; set; }
