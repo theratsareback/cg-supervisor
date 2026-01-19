@@ -19,13 +19,14 @@ class Program
                 coordinator.SetFurnaceProfile(0, activeProfile);
             }
         }
-        
+
         testSet.setpoint = 0;
         testSet.trim = 0;
         testSet.manualSetpoint = false;
         testSet.enable = true;
         
         coordinator.SetSetValues(0, testSet);
+        coordinator.SetState(0, ProcessState.Continue);
         
         //Capture cap = new Capture("invalid", 10294);
 

@@ -1,0 +1,11 @@
+syntax = "proto3";
+option csharp_namespace = "furnace.grpc";
+
+service StreamService {
+  rpc Stream(stream Frame) returns (stream Frame);
+}
+
+message Frame {
+    uint64 seq = 1;
+    string payload = 2;
+}

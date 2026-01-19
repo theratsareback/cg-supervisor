@@ -1,0 +1,30 @@
+syntax = "proto3";
+option csharp_namespace = "furnace.grpc";
+
+service Events {
+    rpc SendEvent (Event) returns (EventResponse);
+}
+
+message Event {
+    EventType type = 1;
+    uint32 index = 2;
+    string payload = 3;
+}
+
+message EventResponse {
+    uint32 index = 1;
+    string payload = 2;
+}
+
+enum EventType {
+    NewFurnace = 0;
+    RemoveFurnace = 1;
+    ModifyFurnace = 2;
+    NewProfile = 3;
+    RemoveProfile = 4;
+    ModifyProfile = 5;
+    RequestProfiles = 6;
+    RequestFurnaces = 7;
+    SetFurnaceProfile = 8;
+    AckFurnaceAlarm = 9;
+}

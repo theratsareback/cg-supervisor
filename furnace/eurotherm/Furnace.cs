@@ -31,7 +31,7 @@ public class Furnace
     private double _setpoint;
     private double _processValue;
     private AlarmStatus _underrange, _overrange, _sensor, _rsp;
-    private object _alarmLock;
+    private object _alarmLock = new();
     private readonly BoundedChannelOptions opts = new BoundedChannelOptions(1)
         {
             FullMode = BoundedChannelFullMode.DropOldest,
@@ -150,7 +150,7 @@ public class Furnace
         {
             FurnaceSet newSet;
             newSet = await _in.ReadAsync(token);
-            state = await _statechannel.Reader.ReadAsync(token);
+            state = ProcessState.Stop;
             activeProfile = await _profilechannel.Reader.ReadAsync(token);
 
             while (!token.IsCancellationRequested)
@@ -160,6 +160,14 @@ public class Furnace
                 while (_in.TryRead(out var latest))
                 {
                     newSet = latest;
+                }
+                while (_profilechannel.Reader.TryRead(out var latest))
+                {
+                    activeProfile = latest;
+                }
+                while (_statechannel.Reader.TryRead(out var latest))
+                {
+                    state = latest;
                 }
 
                 _processValue = GetProcessValue();
