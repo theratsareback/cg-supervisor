@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "furnace", "furnace\furnace.csproj", "{95498C92-527E-43EB-8093-FFBE55A120FF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test\test.csproj", "{B86BF481-0F39-40BF-B671-FEE755A21BAB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "program\program.csproj", "{B86BF481-0F39-40BF-B671-FEE755A21BAB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

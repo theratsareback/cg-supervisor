@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using furnace.profile;
 using furnace.stepper;
 using furnace.camera;
-using Microsoft.VisualBasic;
 
 /// <summary>
 /// Class <c>Furnace</c> represents one Eurotherm, camera, and stepper driver.

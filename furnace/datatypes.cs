@@ -101,7 +101,6 @@ public struct FurnaceSet
     public bool manualSetpoint;
     public bool enable;
     // TODO motor speeds
-    //TODO write profile setting and alarm acknowledgements as events
 }
 
 /// <summary>

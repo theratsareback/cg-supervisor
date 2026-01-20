@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ciFjEqnnGtY=",
+  "dgSpecHash": "Bs5hsrlEaug=",
   "success": true,
-  "projectFilePath": "C:\\Users\\maxbp\\cg-supervisor\\furnace\\furnace.csproj",
+  "projectFilePath": "C:\\Users\\maxbp\\Shared\\Code Projects\\cg-supervisor\\furnace\\furnace.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\maxbp\\.nuget\\packages\\google.protobuf\\3.33.4\\google.protobuf.3.33.4.nupkg.sha512",
     "C:\\Users\\maxbp\\.nuget\\packages\\grpc.aspnetcore\\2.76.0\\grpc.aspnetcore.2.76.0.nupkg.sha512",
@@ -31,7 +31,10 @@
     "C:\\Users\\maxbp\\.nuget\\packages\\opencvsharp4\\4.11.0.20250507\\opencvsharp4.4.11.0.20250507.nupkg.sha512",
     "C:\\Users\\maxbp\\.nuget\\packages\\opencvsharp4.runtime.win\\4.11.0.20250507\\opencvsharp4.runtime.win.4.11.0.20250507.nupkg.sha512",
     "C:\\Users\\maxbp\\.nuget\\packages\\system.diagnostics.diagnosticsource\\10.0.2\\system.diagnostics.diagnosticsource.10.0.2.nupkg.sha512",
-    "C:\\Users\\maxbp\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512"
+    "C:\\Users\\maxbp\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512",
+    "C:\\Users\\maxbp\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.19\\microsoft.netcore.app.ref.8.0.19.nupkg.sha512",
+    "C:\\Users\\maxbp\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.19\\microsoft.windowsdesktop.app.ref.8.0.19.nupkg.sha512",
+    "C:\\Users\\maxbp\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.19\\microsoft.aspnetcore.app.ref.8.0.19.nupkg.sha512"
   ],
   "logs": []
 }

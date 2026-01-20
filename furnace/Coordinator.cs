@@ -1,5 +1,6 @@
 using furnace.eurotherm;
 using furnace.profile;
+using furnace.grpc;
 
 namespace furnace;
 
@@ -8,11 +9,15 @@ public class Coordinator
 {
     private FurnaceScheduler furnaceScheduler;
     private ProfileHandler profileHandler;
+    private FurnaceGrpcServer grpcServer;
 
     public Coordinator()
     {
         furnaceScheduler = new FurnaceScheduler();
         profileHandler = new ProfileHandler();
+        grpcServer = new FurnaceGrpcServer();
+        grpcServer.StartAsync();
+        Thread.Sleep(5000); // fix this
     }
     
     public void NewFurnace(FurnaceInit init)
