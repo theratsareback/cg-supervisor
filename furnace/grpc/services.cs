@@ -2,6 +2,9 @@ using System.Diagnostics.Tracing;
 using Grpc.Core;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using System.Threading;
+using System.Threading.Channels;
+using furnace.eurotherm;
 
 namespace furnace.grpc;
 
@@ -14,11 +17,10 @@ public class StreamServiceImpl : StreamService.StreamServiceBase
     {
         await foreach (var frame in requestStream.ReadAllAsync())
         {
-            // Echo back (or modify)
             var response = new Frame
             {
                 Seq = frame.Seq,
-                Payload = $"Server received: {frame.Payload}"
+                Payload = "" // TODO stream responses
             };
 
             await responseStream.WriteAsync(response);
@@ -37,39 +39,33 @@ public class EventsServiceImpl : Events.EventsBase
 
     public override Task<EventResponse> SendEvent(Event request, ServerCallContext context)
     {
+        try{
+        Console.WriteLine("Task Invoked");
         // Basic logging / inspection
         _logger.LogInformation(
             "Received event: Type={Type}, Index={Index}, PayloadLength={Len}",
             request.Type, request.Index, request.Payload?.Length ?? 0);
 
-        // Example "router" based on EventType
-        // var responsePayload = request.Type switch
-        // {
-        //     // EventType.NewFurnace        => HandleNewFurnace(request),
-        //     // EventType.RemoveFurnace     => HandleRemoveFurnace(request),
-        //     // EventType.ModifyFurnace     => HandleModifyFurnace(request),
-
-        //     // EventType.NewProfile        => HandleNewProfile(request),
-        //     // EventType.RemoveProfile     => HandleRemoveProfile(request),
-        //     // EventType.ModifyProfile     => HandleModifyProfile(request),
-
-        //     // EventType.RequestProfiles   => HandleRequestProfiles(request),
-        //     // EventType.RequestFurnaces   => HandleRequestFurnaces(request),
-
-        //     // EventType.SetFurnaceProfile => HandleSetFurnaceProfile(request),
-        //     // EventType.AckFurnaceAlarm   => HandleAckFurnaceAlarm(request),
-
-        //     _ => throw new RpcException(
-        //             new Status(StatusCode.InvalidArgument, $"Unknown event type: {request.Type}"))
-        // };
-
         var response = new EventResponse
         {
-            Index = request.Index,           // common pattern: echo correlation index
-            //Payload = responsePayload ?? ""  // never return null strings
+            Index = request.Index,
+            Payload = "" // TODO event calls
         };
         Console.WriteLine(request.Payload);
 
         return Task.FromResult(response);
+        }
+        catch (RpcException ex)
+        {
+            Console.WriteLine($"gRPC error: {ex.StatusCode} - {ex.Status.Detail}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Event loop crashed: {ex}");
+            throw;
+        }
+        
     }
+    
 }

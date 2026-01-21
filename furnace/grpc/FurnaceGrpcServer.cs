@@ -21,41 +21,47 @@ public sealed class FurnaceGrpcServer : IAsyncDisposable
             ApplicationName = typeof(FurnaceGrpcServer).Assembly.FullName
         });
 
-        // If you want plaintext HTTP/2 (h2c), configure Kestrel:
+        builder.Services.AddSingleton<IHostLifetime, NoopHostLifetime>();
+
         builder.WebHost.ConfigureKestrel(o =>
         {
             o.ListenLocalhost(port, listen => listen.Protocols = HttpProtocols.Http2);
         });
 
         builder.Services.AddLogging();
+        
         builder.Services.AddGrpc();
-
-        // Register your services’ dependencies (if any)
-        // e.g. builder.Services.AddSingleton<Something>();
 
         var app = builder.Build();
 
         app.MapGrpcService<StreamServiceImpl>();
         app.MapGrpcService<EventsServiceImpl>();
-
-        // Optional: basic health/info endpoint
         app.MapGet("/", () => "gRPC server is running.");
 
         _app = app;
 
         await app.StartAsync(ct);
 
-        // Kestrel can bind multiple addresses; simplest:
         Address = new Uri($"http://localhost:{port}");
     }
 
     public async Task StopAsync(CancellationToken ct = default)
     {
         if (_app == null) return;
+
+        _app.Lifetime.StopApplication();
+
         await _app.StopAsync(ct);
         await _app.DisposeAsync();
         _app = null;
     }
 
-    public async ValueTask DisposeAsync() => await StopAsync();
+    public ValueTask DisposeAsync() => new(StopAsync());
+
+    private sealed class NoopHostLifetime : IHostLifetime
+    {
+        public Task WaitForStartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    }
 }
+
