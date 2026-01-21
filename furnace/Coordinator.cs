@@ -92,14 +92,14 @@ public class Coordinator
         return profileHandler.profiles;
     }
 
-    public void SetSetValues(int index, FurnaceSet newSet)
-    {
-        furnaceScheduler.setValues[index] = newSet;
-    }
+    // public void SetSetValues(int index, FurnaceSet newSet)
+    // {
+    //     furnaceScheduler.setValues[index] = newSet;
+    // }
 
     public void Update()
     {
-        furnaceScheduler.Pull();
-        furnaceScheduler.Push();
+        // furnaceScheduler.Pull();
+        // furnaceScheduler.Push();
     }
 }

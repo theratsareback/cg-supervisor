@@ -8,12 +8,13 @@ using OpenCvSharp;
 
 public class FurnaceScheduler : IDisposable
 {
-    public List<FurnaceSet> setValues = [];
-    public List<FurnaceState> stateValues = [];
+    // public List<FurnaceSet> setValues = [];
+    // public List<FurnaceState> stateValues = [];
     public List<FurnaceInit> _furnacesInit = [];
     public readonly List<Furnace> furnaces = [];
-    private readonly List<Channel<FurnaceSet>> _setChannels = [];
-    private readonly List<Channel<FurnaceState>> _stateChannels = [];
+    // private readonly List<Channel<FurnaceSet>> _setChannels = [];
+    // private readonly List<Channel<FurnaceState>> _stateChannels = [];
+    private FurnaceBus _bus;
     private readonly List<Task> _workerTasks = [];
     private readonly List<CancellationTokenSource> _workerCts = [];
     private readonly CancellationTokenSource _globalCts = new CancellationTokenSource();
@@ -50,15 +51,13 @@ public class FurnaceScheduler : IDisposable
     public void NewFurnace(FurnaceInit init)
     {
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token);
-        var setChannel = Channel.CreateBounded<FurnaceSet>(opts);
-        var stateChannel = Channel.CreateBounded<FurnaceState>(opts);
-        _setChannels.Add(setChannel);
-        _stateChannels.Add(stateChannel);
-        setValues.Add(default);
-        stateValues.Add(new FurnaceState());
+        // var setChannel = Channel.CreateBounded<FurnaceSet>(opts);
+        // var stateChannel = Channel.CreateBounded<FurnaceState>(opts);
+        // _setChannels.Add(setChannel);
+        // _stateChannels.Add(stateChannel);
 
         _furnacesInit ??= [];
-        Furnace furnace = new Furnace(init, setChannel, stateChannel);
+        Furnace furnace = new Furnace(init);
         furnaces.Add(furnace);
         if (!_furnacesInit.Contains(init))
         {
@@ -87,10 +86,8 @@ public class FurnaceScheduler : IDisposable
     {
         CancelWorker(index);
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token);
-        var setChannel = _setChannels[index];
-        var stateChannel = _stateChannels[index];
 
-        Furnace furnace = new Furnace(init, setChannel, stateChannel);
+        Furnace furnace = new Furnace(init);
         furnaces[index] = furnace;
 
         _workerTasks[index] = furnace.Run(cts.Token);
@@ -103,21 +100,21 @@ public class FurnaceScheduler : IDisposable
     
     public void RemoveFurnace(int index)
     {
-        _furnacesInit ??= [];
-        _furnacesInit[index].index = -1;
-        CancelWorker(index);
-        stateValues[index]._active = false;
+        // _furnacesInit ??= [];
+        // _furnacesInit[index].index = -1;
+        // CancelWorker(index);
+        // stateValues[index]._active = false;
 
-        List<FurnaceInit> actives = [];
-        foreach (FurnaceInit i in _furnacesInit)
-        {
-            if (i.index >= 0)
-            {
-                actives.Add(i);
-            }
-        }
-        string inits = JsonConvert.SerializeObject(actives);
-        File.WriteAllText(@"furnaces.json", inits);
+        // List<FurnaceInit> actives = [];
+        // foreach (FurnaceInit i in _furnacesInit)
+        // {
+        //     if (i.index >= 0)
+        //     {
+        //         actives.Add(i);
+        //     }
+        // }
+        // string inits = JsonConvert.SerializeObject(actives);
+        // File.WriteAllText(@"furnaces.json", inits);
     }
 
     /// <summary>
@@ -130,37 +127,37 @@ public class FurnaceScheduler : IDisposable
         return inits;
     }
 
-    /// <summary>
-    /// Push latest FurnaceSet structs to workers
-    /// </summary>
-    public void Push()
-    {
-        for (int i = 0; i < _setChannels.Count; i++)
-            _setChannels[i].Writer.TryWrite(setValues[i]);
-    }
+    // /// <summary>
+    // /// Push latest FurnaceSet structs to workers
+    // /// </summary>
+    // public void Push()
+    // {
+    //     for (int i = 0; i < _setChannels.Count; i++)
+    //         _setChannels[i].Writer.TryWrite(setValues[i]);
+    // }
 
-    /// <summary>
-    /// Pull latest FurnaceState structs from workers
-    /// </summary>
-    public void Pull()
-    {
-        for (int i = 0; i < _stateChannels.Count; i++)
-        {
-            var reader = _stateChannels[i].Reader;
+    // /// <summary>
+    // /// Pull latest FurnaceState structs from workers
+    // /// </summary>
+    // public void Pull()
+    // {
+    //     for (int i = 0; i < _stateChannels.Count; i++)
+    //     {
+    //         var reader = _stateChannels[i].Reader;
 
-            FurnaceState last = default;
-            bool sawAny = false;
+    //         FurnaceState last = default;
+    //         bool sawAny = false;
 
-            while (reader.TryRead(out FurnaceState v))
-            {
-                last = v;
-                sawAny = true;
-            }
+    //         while (reader.TryRead(out FurnaceState v))
+    //         {
+    //             last = v;
+    //             sawAny = true;
+    //         }
 
-            if (sawAny)
-                stateValues[i] = last;
-        }
-    }
+    //         if (sawAny)
+    //             stateValues[i] = last;
+    //     }
+    // }
 
     /// <summary>
     /// Cancels a single furnace worker, given the furnace index for that worker
@@ -174,8 +171,7 @@ public class FurnaceScheduler : IDisposable
 
         if (closeChannels)
         {
-            _stateChannels[index].Writer.TryComplete();
-            _setChannels[index].Writer.TryComplete();
+            _bus.TryRemove(furnaces[index].guid); //TODO this is stupid just remove furnaces by guid not index
         }
     }
 
@@ -190,8 +186,7 @@ public class FurnaceScheduler : IDisposable
         {
             for (int i = 0; i < furnaces.Count; i++)
             {
-                _setChannels[i].Writer.TryComplete();
-                _stateChannels[i].Writer.TryComplete();
+                _bus.TryRemove(furnaces[i].guid);
             }
         }
     }

@@ -15,6 +15,7 @@ using furnace.camera;
 public class Furnace
 {
     public string furnaceLabel;
+    public string guid;
     public ProcessState state;
     private Eurotherm Controller;
     private StepperController? stepper;
@@ -25,6 +26,7 @@ public class Furnace
     private ChannelWriter<FurnaceState> _out;
     private Channel<ProcessState> _statechannel;
     private Channel<Profile> _profilechannel;
+    private FurnaceBus _bus;
     private Profile? activeProfile;
     private FurnaceStatus _status;
     private double _setpoint;
@@ -38,10 +40,11 @@ public class Furnace
             SingleWriter = false
         };
 
-    public Furnace(FurnaceInit init, Channel<FurnaceSet> setChannel, Channel<FurnaceState> stateChannel)
+    public Furnace(FurnaceInit init, string? _guid = null)
     {
-        _in = setChannel;
-        _out = stateChannel;
+        guid = _guid ??= Guid.NewGuid().ToString("N");
+        _in = _bus.SetReader(guid);
+        _out = _bus.StateWriter(guid);
         furnaceLabel = init.furnaceLabel;
         Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
         Controller.Connect();
