@@ -5,6 +5,7 @@ namespace furnace;
 
 public sealed class FurnaceBus
 {
+    private FurnaceBus _bus;
     private sealed class FurnaceChannels
     {
         public required Channel<FurnaceSet> A { get; init; }
@@ -20,19 +21,22 @@ public sealed class FurnaceBus
         UnboundedChannelOptions? aOpts = null,
         UnboundedChannelOptions? bOpts = null)
     {
-        _aOpts = aOpts ?? new UnboundedChannelOptions
+        if (_bus == null)
         {
-            SingleReader = true,
-            SingleWriter = false,
-            AllowSynchronousContinuations = false
-        };
+            _aOpts = aOpts ?? new UnboundedChannelOptions
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = false
+            };
 
-        _bOpts = bOpts ?? new UnboundedChannelOptions
-        {
-            SingleReader = true,
-            SingleWriter = false,
-            AllowSynchronousContinuations = false
-        };
+            _bOpts = bOpts ?? new UnboundedChannelOptions
+            {
+                SingleReader = true,
+                SingleWriter = false,
+                AllowSynchronousContinuations = false
+            };
+        }
     }
 
     private FurnaceChannels Get(string workerId) =>

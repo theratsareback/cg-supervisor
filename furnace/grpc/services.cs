@@ -10,6 +10,9 @@ namespace furnace.grpc;
 
 public class StreamServiceImpl : StreamService.StreamServiceBase
 {
+    private readonly FurnaceBus _bus;
+    public StreamServiceImpl(FurnaceBus bus) => _bus = bus;
+
     public override async Task Stream(
         IAsyncStreamReader<Frame> requestStream,
         IServerStreamWriter<Frame> responseStream,
@@ -31,9 +34,11 @@ public class StreamServiceImpl : StreamService.StreamServiceBase
 public class EventsServiceImpl : Events.EventsBase
 {
     private readonly ILogger<EventsServiceImpl> _logger;
+    private readonly FurnaceBus _bus;
 
-    public EventsServiceImpl(ILogger<EventsServiceImpl> logger)
+    public EventsServiceImpl(FurnaceBus bus, ILogger<EventsServiceImpl> logger)
     {
+        _bus = bus;
         _logger = logger;
     }
 

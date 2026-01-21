@@ -27,6 +27,7 @@ public class FurnaceScheduler : IDisposable
 
     public FurnaceScheduler()
     {
+        _bus = new FurnaceBus();
         if (!File.Exists(@"furnaces.json"))
         {
             File.WriteAllText(@"furnaces.json", "[]"); // if file doesn't exist, make one with an empty list

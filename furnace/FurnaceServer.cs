@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using furnace.grpc;
 
-namespace furnace.grpc;
+namespace furnace;
 
-public sealed class FurnaceGrpcServer : IAsyncDisposable
+public sealed class FurnaceServer : IAsyncDisposable
 {
     private WebApplication? _app;
 
@@ -18,7 +19,7 @@ public sealed class FurnaceGrpcServer : IAsyncDisposable
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
-            ApplicationName = typeof(FurnaceGrpcServer).Assembly.FullName
+            ApplicationName = typeof(FurnaceServer).Assembly.FullName
         });
 
         builder.Services.AddSingleton<IHostLifetime, NoopHostLifetime>();
@@ -31,6 +32,10 @@ public sealed class FurnaceGrpcServer : IAsyncDisposable
         builder.Services.AddLogging();
         
         builder.Services.AddGrpc();
+
+        builder.Services.AddSingleton<FurnaceBus>();
+        builder.Services.AddSingleton<Coordinator>();
+        builder.Services.AddHostedService<CoordinatorService>();
 
         var app = builder.Build();
 

@@ -6,7 +6,7 @@ service Events {
 }
 
 message Event {
-    uint32 type = 1; // cast to EventType in C#
+    uint32 type = 1;
     uint32 index = 2;
     string payload = 3;
 }

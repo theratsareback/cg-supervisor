@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Hosting;
 using furnace.eurotherm;
 using furnace.profile;
 using furnace.grpc;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace furnace;
 
@@ -9,15 +11,13 @@ public class Coordinator
 {
     private FurnaceScheduler furnaceScheduler;
     private ProfileHandler profileHandler;
-    private FurnaceGrpcServer grpcServer;
+    private readonly FurnaceBus _bus;
 
-    public Coordinator()
+    public Coordinator(FurnaceBus bus)
     {
+        _bus = bus;
         furnaceScheduler = new FurnaceScheduler();
         profileHandler = new ProfileHandler();
-        grpcServer = new FurnaceGrpcServer();
-        grpcServer.StartAsync();
-        Thread.Sleep(5000); // fix this
     }
     
     public void NewFurnace(FurnaceInit init)
@@ -97,9 +97,21 @@ public class Coordinator
     //     furnaceScheduler.setValues[index] = newSet;
     // }
 
-    public void Update()
+    public async Task RunAsync(CancellationToken ct)
     {
-        // furnaceScheduler.Pull();
-        // furnaceScheduler.Push();
+        while (!ct.IsCancellationRequested)
+        {
+            //all we need to do here is process events?
+        }
     }
+}
+
+public sealed class CoordinatorService : BackgroundService
+{
+    private readonly Coordinator _coord;
+
+    public CoordinatorService(Coordinator coord) => _coord = coord;
+
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        => _coord.RunAsync(stoppingToken);
 }
