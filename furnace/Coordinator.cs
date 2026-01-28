@@ -1,23 +1,36 @@
 using furnace.eurotherm;
 using furnace.profile;
 using furnace.grpc;
+using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 
 namespace furnace;
 
 
-public class Coordinator
-{
-    private FurnaceScheduler furnaceScheduler;
-    private ProfileHandler profileHandler;
-    private FurnaceGrpcServer grpcServer;
+using Microsoft.Extensions.Hosting;
 
-    public Coordinator()
+public sealed class Coordinator : IHostedService, IDisposable
+{
+    private FurnaceScheduler? furnaceScheduler;
+    private ProfileHandler? profileHandler;
+
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        furnaceScheduler = new FurnaceScheduler();
+        furnaceScheduler = new FurnaceScheduler(cancellationToken);
         profileHandler = new ProfileHandler();
-        grpcServer = new FurnaceGrpcServer();
-        grpcServer.StartAsync();
-        Thread.Sleep(5000); // fix this
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        Dispose();
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        furnaceScheduler?.Dispose();
+        furnaceScheduler = null;
     }
     
     public void NewFurnace(FurnaceInit init)
@@ -50,22 +63,17 @@ public class Coordinator
         profileHandler.ModifyProfile(index, profile);
     }
 
-    /// <summary>
-    /// Sends the profile defs currently in the profile handler to the frontend via GRPC
-    /// </summary>
-    public void RequestProfiles()
+    public List<ProfileDef> RequestProfiles()
     {
-        // profileHandler.profiles;
-        // TODO send by GRPC
+        return profileHandler.profiles;
     }
 
     /// <summary>
     /// Sends the furnace inits currently in the furnace scheduler to the frontend via GRPC
     /// </summary>
-    public void RequestFurnaces()
+    public List<FurnaceInit> RequestFurnaces()
     {
-        List<FurnaceInit> inits = furnaceScheduler.GetInits();
-        // TODO send by GRPC
+        return furnaceScheduler.GetInits();
     }
     
     /// <summary>
@@ -92,7 +100,7 @@ public class Coordinator
         return profileHandler.profiles;
     }
 
-    public void SetSetValues(int index, FurnaceSet newSet)
+    public void SetSetValue(int index, FurnaceSet newSet)
     {
         furnaceScheduler.setValues[index] = newSet;
     }
@@ -101,5 +109,64 @@ public class Coordinator
     {
         furnaceScheduler.Pull();
         furnaceScheduler.Push();
+    }
+
+    public List<FurnaceState> GetStateValues()
+    {
+        furnaceScheduler.Pull();
+        return furnaceScheduler.stateValues;
+    }
+
+    public void SetSetValues(List<FurnaceSet> newSets)
+    {
+        furnaceScheduler.setValues = newSets;
+        furnaceScheduler.Push();
+    }
+
+    public string Handle(Event _event)
+    {   
+        EventType type = (EventType)_event.Type;
+        int index = (int)_event.Index;
+        var EventObject = JsonConvert.DeserializeObject(_event.Payload);
+        switch (type, EventObject)
+        {
+            case (EventType.NewFurnace, FurnaceInit init):
+                NewFurnace(init);
+                return "";
+
+            case (EventType.RemoveFurnace, var _):
+                RemoveFurnace(index);
+                return "";
+
+            case (EventType.ModifyFurnace, FurnaceInit init):
+                ModifyFurnace(index, init);
+                return "";
+
+            case (EventType.NewProfile, ProfileDef profile):
+                NewProfile(profile);
+                return "";
+
+            case (EventType.RemoveProfile, ProfileDef profile):
+                RemoveProfile(profile);
+                return "";
+
+            case (EventType.ModifyProfile, ProfileDef profile):
+                ModifyProfile(index, profile);
+                return "";
+
+            case (EventType.RequestProfiles, var _):
+                return JsonConvert.SerializeObject(RequestProfiles());
+
+            case (EventType.RequestFurnaces, var _):
+                return JsonConvert.SerializeObject(furnaceScheduler._furnacesInit);
+
+            case (EventType.SetFurnaceProfile, ProfileDef profile):
+                SetFurnaceProfile(index, profile);
+                return "";
+
+            case (EventType.AckFurnaceAlarm, var _):
+                return "";
+        }
+        return "";
     }
 }

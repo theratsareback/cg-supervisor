@@ -25,10 +25,6 @@ public class Eurotherm
         _ipAddress = ipAddress;
         _port = port;
         _slaveId = 255; // slave id can be anything in 0-255 and still work
-    }
-
-    public void Connect()
-    {
         _tcpClient = new TcpClient();
         _tcpClient.Connect(_ipAddress, _port);
         var factory = new ModbusFactory();
@@ -43,6 +39,24 @@ public class Eurotherm
 
         alarms = [OverrangeAlarm, UnderrangeAlarm, SensorBreakAlarm, RemoteSetpointFailureAlarm];
     }
+
+    /// might want to keep this for reconnect logic later
+    // public void Connect()
+    // {
+    //     _tcpClient = new TcpClient();
+    //     _tcpClient.Connect(_ipAddress, _port);
+    //     var factory = new ModbusFactory();
+    //     _modbusMaster = factory.CreateMaster(_tcpClient);
+
+    //     Heater = new Heater(_modbusMaster, _slaveId);
+
+    //     OverrangeAlarm = new Alarm(_modbusMaster, _slaveId, 2113);
+    //     UnderrangeAlarm = new Alarm(_modbusMaster, _slaveId, 2137);
+    //     SensorBreakAlarm = new Alarm(_modbusMaster, _slaveId, 2161);
+    //     RemoteSetpointFailureAlarm = new Alarm(_modbusMaster, _slaveId, 2209);
+
+    //     alarms = [OverrangeAlarm, UnderrangeAlarm, SensorBreakAlarm, RemoteSetpointFailureAlarm];
+    // }
 
     public void Disconnect()
     {

@@ -16,7 +16,7 @@ public class FurnaceScheduler : IDisposable
     private readonly List<Channel<FurnaceState>> _stateChannels = [];
     private readonly List<Task> _workerTasks = [];
     private readonly List<CancellationTokenSource> _workerCts = [];
-    private readonly CancellationTokenSource _globalCts = new CancellationTokenSource();
+    private readonly CancellationToken _globalCt;
     private readonly BoundedChannelOptions opts = new BoundedChannelOptions(1)
         {
             FullMode = BoundedChannelFullMode.DropOldest,
@@ -24,7 +24,7 @@ public class FurnaceScheduler : IDisposable
             SingleWriter = true
         };
 
-    public FurnaceScheduler()
+    public FurnaceScheduler(CancellationToken ct)
     {
         if (!File.Exists(@"furnaces.json"))
         {
@@ -34,6 +34,7 @@ public class FurnaceScheduler : IDisposable
         var inits = JsonConvert.DeserializeObject<List<FurnaceInit>>(File.ReadAllText(@"furnaces.json"));
         inits ??= [];
         _furnacesInit = inits;
+        _globalCt = ct;
 
         int i = 0;
         foreach (FurnaceInit init in _furnacesInit)
@@ -49,7 +50,7 @@ public class FurnaceScheduler : IDisposable
     /// <param name="init">Init struct containing information for new furnace</param>
     public void NewFurnace(FurnaceInit init)
     {
-        var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token);
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
         var setChannel = Channel.CreateBounded<FurnaceSet>(opts);
         var stateChannel = Channel.CreateBounded<FurnaceState>(opts);
         _setChannels.Add(setChannel);
@@ -86,7 +87,7 @@ public class FurnaceScheduler : IDisposable
     public void ModifyFurnace(int index, FurnaceInit init)
     {
         CancelWorker(index);
-        var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token);
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
         var setChannel = _setChannels[index];
         var stateChannel = _stateChannels[index];
 
@@ -184,8 +185,6 @@ public class FurnaceScheduler : IDisposable
     /// </summary>
     private void CancelAll(bool closeChannels = true)
     {
-        _globalCts.Cancel();
-
         if (closeChannels)
         {
             for (int i = 0; i < furnaces.Count; i++)
@@ -202,7 +201,5 @@ public class FurnaceScheduler : IDisposable
 
         foreach (var cts in _workerCts)
             cts.Dispose();
-
-        _globalCts.Dispose();
     }
 }

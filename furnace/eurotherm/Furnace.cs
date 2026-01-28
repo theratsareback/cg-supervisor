@@ -44,7 +44,6 @@ public class Furnace
         _out = stateChannel;
         furnaceLabel = init.furnaceLabel;
         Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
-        Controller.Connect();
         _statechannel = Channel.CreateBounded<ProcessState>(opts);
         _profilechannel = Channel.CreateBounded<Profile>(opts);
 
@@ -61,7 +60,6 @@ public class Furnace
         _out = stateChannel;
         furnaceLabel = init.furnaceLabel;
         Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
-        Controller.Connect();
         //camera = new Capture(camIp, camPort);
         //camera.Start();
         //TODO MOTORS

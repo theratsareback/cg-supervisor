@@ -10,6 +10,9 @@ namespace furnace.grpc;
 
 public class StreamServiceImpl : StreamService.StreamServiceBase
 {
+    private readonly Coordinator _coord;
+    public StreamServiceImpl(Coordinator coordinator) => _coord = coordinator;
+
     public override async Task Stream(
         IAsyncStreamReader<Frame> requestStream,
         IServerStreamWriter<Frame> responseStream,
@@ -31,9 +34,11 @@ public class StreamServiceImpl : StreamService.StreamServiceBase
 public class EventsServiceImpl : Events.EventsBase
 {
     private readonly ILogger<EventsServiceImpl> _logger;
+    private readonly Coordinator _coord;
 
-    public EventsServiceImpl(ILogger<EventsServiceImpl> logger)
+    public EventsServiceImpl(Coordinator coordinator, ILogger<EventsServiceImpl> logger)
     {
+        _coord = coordinator;
         _logger = logger;
     }
 
@@ -41,17 +46,18 @@ public class EventsServiceImpl : Events.EventsBase
     {
         try{
         Console.WriteLine("Task Invoked");
-        // Basic logging / inspection
+        Console.WriteLine(request.Index);
+        Console.WriteLine(request.Payload);
+
         _logger.LogInformation(
             "Received event: Type={Type}, Index={Index}, PayloadLength={Len}",
             request.Type, request.Index, request.Payload?.Length ?? 0);
-
+        string payload = _coord.Handle(request);
         var response = new EventResponse
         {
             Index = request.Index,
-            Payload = "" // TODO event calls
+            Payload = payload
         };
-        Console.WriteLine(request.Payload);
 
         return Task.FromResult(response);
         }

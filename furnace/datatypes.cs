@@ -90,6 +90,8 @@ public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus { Off, OnAck, OffNonAck, OnNonAck }
 
+public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile, RequestProfiles, RequestFurnaces, SetFurnaceProfile, AckFurnaceAlarm }
+
 /// <summary>
 /// Struct <c>FurnaceSet</c> contains the state of the frontend interface to be streamed to the backend.
 /// Old information is ignored. Used only to convey continuous data.
@@ -119,7 +121,7 @@ public class Circle
 /// </summary>
 public sealed class ProfileDef
 {
-    public string Label { get; init; }
+    public string? Label { get; init; }
     public List<Segment> Segments { get; } = new();
 }
 
@@ -137,3 +139,4 @@ public class Segment
     public double Endpoint { get; set; }
 
 }
+

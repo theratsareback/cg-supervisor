@@ -116,7 +116,7 @@ public static class ProfileMath
 
 public sealed class Profile
 {
-    public string Label { get; init; }
+    public string? Label { get; init; }
     public List<Segment> Segments { get; } = new();
     public Timer OnTimer { get; set; } = new();
 

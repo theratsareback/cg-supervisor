@@ -25,7 +25,7 @@ class Program
         testSet.manualSetpoint = false;
         testSet.enable = true;
         
-        coordinator.SetSetValues(0, testSet);
+        coordinator.SetSetValue(0, testSet);
         coordinator.SetState(0, ProcessState.Pause);
         
         //Capture cap = new Capture("invalid", 10294);
