@@ -140,6 +140,17 @@ public class Furnace
     {
         _statechannel.Writer.TryWrite(newState);
     }
+    
+    /// <summary>
+    /// TODO remove and make individual acknowledgements
+    /// </summary>
+    public void AckAlarms()
+    {
+        foreach (Alarm alarm in Controller.alarms)
+        {
+            alarm.Acknowledge();
+        }
+    }
 
     public async Task Run(CancellationToken token)
     {

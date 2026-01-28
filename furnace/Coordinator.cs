@@ -165,6 +165,7 @@ public sealed class Coordinator : IHostedService, IDisposable
                 return "";
 
             case (EventType.AckFurnaceAlarm, var _):
+                furnaceScheduler.furnaces[index].AckAlarms();
                 return "";
         }
         return "";

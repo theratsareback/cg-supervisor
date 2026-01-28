@@ -1,38 +1,47 @@
-﻿using furnace;
+﻿using System.Threading.Tasks;
+using furnace;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
-        string label = "PbMoO4";
+        // string label = "PbMoO4";
 
-        var coordinator = new Coordinator();
-        ProfileDef activeProfile;
-        FurnaceSet testSet = default(FurnaceSet);
+        // var coordinator = new Coordinator();
+        // ProfileDef activeProfile;
+        // FurnaceSet testSet = default(FurnaceSet);
         
 
-        foreach (var profileDef in coordinator.GetProfileDefs())
-        {
-            if (profileDef.Label == label)
-            {
-                activeProfile = profileDef;
-                coordinator.SetFurnaceProfile(0, activeProfile);
-            }
-        }
+        // foreach (var profileDef in coordinator.GetProfileDefs())
+        // {
+        //     if (profileDef.Label == label)
+        //     {
+        //         activeProfile = profileDef;
+        //         coordinator.SetFurnaceProfile(0, activeProfile);
+        //     }
+        // }
 
-        testSet.setpoint = 0;
-        testSet.trim = 0;
-        testSet.manualSetpoint = false;
-        testSet.enable = true;
+        // testSet.setpoint = 0;
+        // testSet.trim = 0;
+        // testSet.manualSetpoint = false;
+        // testSet.enable = true;
         
-        coordinator.SetSetValue(0, testSet);
-        coordinator.SetState(0, ProcessState.Pause);
+        // coordinator.SetSetValue(0, testSet);
+        // coordinator.SetState(0, ProcessState.Pause);
         
-        //Capture cap = new Capture("invalid", 10294);
+        // //Capture cap = new Capture("invalid", 10294);
+
+        // while (true)
+        // {
+        //     coordinator.Update();
+        // }
+
+        var server = new FurnaceServer();
+        await server.StartAsync();
 
         while (true)
         {
-            coordinator.Update();
+            
         }
 
     }
