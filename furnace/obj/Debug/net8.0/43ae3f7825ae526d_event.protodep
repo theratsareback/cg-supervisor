@@ -1,2 +1,2 @@
-obj\Debug\net8.0\grpc\Protos/Event.cs \
-obj\Debug\net8.0\grpc\Protos/EventGrpc.cs: grpc/Protos/event.proto
+obj\Debug\net8.0\grpc\protos/Event.cs \
+obj\Debug\net8.0\grpc\protos/EventGrpc.cs: grpc/protos/event.proto

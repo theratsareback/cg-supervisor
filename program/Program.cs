@@ -36,12 +36,12 @@ class Program
         //     coordinator.Update();
         // }
 
-        var server = new FurnaceServer();
+        FurnaceServer server = new FurnaceServer();
         await server.StartAsync();
 
         while (true)
         {
-            
+            Thread.Sleep(100);
         }
 
     }

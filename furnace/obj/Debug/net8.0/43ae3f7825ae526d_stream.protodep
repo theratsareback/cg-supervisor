@@ -1,2 +1,2 @@
-obj\Debug\net8.0\grpc\Protos/Stream.cs \
-obj\Debug\net8.0\grpc\Protos/StreamGrpc.cs: grpc/Protos/stream.proto
+obj\Debug\net8.0\grpc\protos/Stream.cs \
+obj\Debug\net8.0\grpc\protos/StreamGrpc.cs: grpc/protos/stream.proto

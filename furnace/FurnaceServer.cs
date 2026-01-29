@@ -26,7 +26,7 @@ public sealed class FurnaceServer : IAsyncDisposable
 
         builder.WebHost.ConfigureKestrel(o =>
         {
-            o.ListenLocalhost(port, listen => listen.Protocols = HttpProtocols.Http2);
+            o.ListenAnyIP(port, listen => listen.Protocols = HttpProtocols.Http2);
         });
 
         builder.Services.AddLogging();
@@ -35,8 +35,6 @@ public sealed class FurnaceServer : IAsyncDisposable
 
         builder.Services.AddSingleton<Coordinator>();
         builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<Coordinator>());
-
-
 
         var app = builder.Build();
 
