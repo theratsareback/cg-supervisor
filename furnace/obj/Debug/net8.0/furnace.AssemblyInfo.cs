@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("furnace")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ff8d46402bbacee0a46af1032a999070de001dd8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44e7c9f7fdb98a209e8678da3ff72f346ad5b9a3")]
 [assembly: System.Reflection.AssemblyProductAttribute("furnace")]
 [assembly: System.Reflection.AssemblyTitleAttribute("furnace")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

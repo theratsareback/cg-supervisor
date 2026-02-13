@@ -5,8 +5,10 @@ using Microsoft.Extensions.Logging;
 using System.Threading;
 using System.Threading.Channels;
 using furnace.eurotherm;
+using Newtonsoft.Json;
 
 namespace furnace.grpc;
+
 
 public class StreamServiceImpl : StreamService.StreamServiceBase
 {
@@ -18,16 +20,46 @@ public class StreamServiceImpl : StreamService.StreamServiceBase
         IServerStreamWriter<Frame> responseStream,
         ServerCallContext context)
     {
-        await foreach (var frame in requestStream.ReadAllAsync())
-        {
-            var response = new Frame
-            {
-                Seq = frame.Seq,
-                Payload = "" // TODO stream responses
-            };
+        var ct = context.CancellationToken;
 
-            await responseStream.WriteAsync(response);
+        ulong latestClientSeq = 0;
+
+        var reader = Task.Run(async () =>
+        {
+            try
+            {
+                await foreach (var msg in requestStream.ReadAllAsync(ct))
+                {
+                    if (msg.Seq > latestClientSeq)
+                    {
+                        List<FurnaceSet>? newSets = JsonConvert.DeserializeObject<List<FurnaceSet>>(msg.Payload);
+                        if (newSets != null)
+                        {
+                            _coord.SetSetValues(newSets);
+                        }                    
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+        }, ct);
+
+        ulong serverSeq = 0;
+
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(16));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                serverSeq++;
+                await responseStream.WriteAsync(new Frame
+                {
+                    Seq = serverSeq,
+                    Payload = JsonConvert.SerializeObject(_coord.GetStateValues())
+                });
+            }
         }
+        catch (OperationCanceledException) { }
     }
 }
 
