@@ -1,5 +1,6 @@
 namespace furnace.eurotherm;
 using System;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Channels;
@@ -8,14 +9,12 @@ using OpenCvSharp;
 
 public class FurnaceScheduler : IDisposable
 {
-    public List<FurnaceSet> setValues = [];
-    public List<FurnaceState> stateValues = [];
+    public ConcurrentDictionary<Guid, Furnace> furnaceDict = new();
+    public ConcurrentDictionary<Guid, FurnaceSet> setValues = [];
+    public ConcurrentDictionary<Guid, FurnaceState> stateValues = [];
     public List<FurnaceInit> _furnacesInit = [];
     public readonly List<Furnace> furnaces = [];
-    private readonly List<Channel<FurnaceSet>> _setChannels = [];
-    private readonly List<Channel<FurnaceState>> _stateChannels = [];
-    private readonly List<Task> _workerTasks = [];
-    private readonly List<CancellationTokenSource> _workerCts = [];
+    private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _workerCts = [];
     private readonly CancellationToken _globalCt;
     private readonly BoundedChannelOptions opts = new BoundedChannelOptions(1)
         {
@@ -51,16 +50,11 @@ public class FurnaceScheduler : IDisposable
     public void NewFurnace(FurnaceInit init)
     {
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
-        var setChannel = Channel.CreateBounded<FurnaceSet>(opts);
-        var stateChannel = Channel.CreateBounded<FurnaceState>(opts);
-        _setChannels.Add(setChannel);
-        _stateChannels.Add(stateChannel);
-        setValues.Add(default);
-        stateValues.Add(new FurnaceState());
 
         _furnacesInit ??= [];
-        Furnace furnace = new Furnace(init, setChannel, stateChannel);
-        furnaces.Add(furnace);
+        Furnace furnace = new Furnace(init);
+        Guid guid = Guid.NewGuid();
+        _ = furnaceDict.Append(new KeyValuePair<Guid, Furnace>(guid, furnace));
         if (!_furnacesInit.Contains(init))
         {
             _furnacesInit.Add(init);
@@ -76,38 +70,34 @@ public class FurnaceScheduler : IDisposable
             File.WriteAllText(@"furnaces.json", inits);
         }
 
-        _workerTasks.Add(furnace.Run(cts.Token));
-        _workerCts.Add(cts);
+        _ = furnace.Run(cts.Token);
+        _workerCts.Append(new KeyValuePair<Guid, CancellationTokenSource>(guid, cts));
     }
 
     /// <summary>
     /// Method <c>ModifyFurnace</c> is used to modify an existing furnace. 
     /// </summary>
     /// <param name="init">Init struct containing new information for furnace</param>
-    public void ModifyFurnace(int index, FurnaceInit init)
+    public void ModifyFurnace(Guid guid, FurnaceInit init)
     {
-        CancelWorker(index);
+        CancelWorker(guid);
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
-        var setChannel = _setChannels[index];
-        var stateChannel = _stateChannels[index];
+        var index = _furnacesInit.IndexOf(furnaceDict[guid].GetInit);
+        Furnace furnace = new Furnace(init);
+        furnaceDict[guid] = furnace;
 
-        Furnace furnace = new Furnace(init, setChannel, stateChannel);
-        furnaces[index] = furnace;
-
-        _workerTasks[index] = furnace.Run(cts.Token);
-        _workerCts[index] = cts;
+        _ = furnace.Run(cts.Token);
+        _workerCts[guid] = cts;
         _furnacesInit[index] = init;
 
         string inits = JsonConvert.SerializeObject(_furnacesInit);
         File.WriteAllText(@"furnaces.json", inits);
     }
     
-    public void RemoveFurnace(int index)
+    public void RemoveFurnace(Guid guid)
     {
         _furnacesInit ??= [];
-        _furnacesInit[index].index = -1;
-        CancelWorker(index);
-        stateValues[index]._active = false;
+        CancelWorker(guid);
 
         List<FurnaceInit> actives = [];
         foreach (FurnaceInit i in _furnacesInit)
@@ -122,13 +112,16 @@ public class FurnaceScheduler : IDisposable
     }
 
     /// <summary>
-    /// Get list of inits for existing furnaces
+    /// Get dict of inits for existing furnaces
     /// </summary>
-    public List<FurnaceInit> GetInits()
+    public ConcurrentDictionary<Guid, FurnaceInit> GetInits()
     {
-        List<FurnaceInit>? inits = JsonConvert.DeserializeObject<List<FurnaceInit>>(File.ReadAllText(@"furnaces.json"));
-        inits ??= [];
-        return inits;
+        var dict = new ConcurrentDictionary<Guid, FurnaceInit>();
+        foreach (KeyValuePair<Guid, Furnace> furnace in furnaceDict)
+        {
+            _ = dict.Append(new KeyValuePair<Guid,FurnaceInit>(furnace.Key, furnace.Value.GetInit));
+        }
+        return dict;
     }
 
     /// <summary>
@@ -136,8 +129,14 @@ public class FurnaceScheduler : IDisposable
     /// </summary>
     public void Push()
     {
-        for (int i = 0; i < _setChannels.Count; i++)
-            _setChannels[i].Writer.TryWrite(setValues[i]);
+        foreach (var key in setValues.Keys)
+        {
+            try 
+            {
+                furnaceDict[key].Push(setValues[key]);
+            }
+            catch { /* assume new data is for a furnace not yet instantiated */ }
+        }
     }
 
     /// <summary>
@@ -145,61 +144,27 @@ public class FurnaceScheduler : IDisposable
     /// </summary>
     public void Pull()
     {
-        for (int i = 0; i < _stateChannels.Count; i++)
+        foreach (var key in furnaceDict.Keys)
         {
-            var reader = _stateChannels[i].Reader;
-
-            FurnaceState last = default;
-            bool sawAny = false;
-
-            while (reader.TryRead(out FurnaceState v))
+            var x = furnaceDict[key].Pull();
+            if (x != null)
             {
-                last = v;
-                sawAny = true;
+                stateValues[key] = x;
             }
-
-            if (sawAny)
-                stateValues[i] = last;
         }
     }
 
     /// <summary>
     /// Cancels a single furnace worker, given the furnace index for that worker
     /// </summary>
-    private void CancelWorker(int index, bool closeChannels = true)
+    private void CancelWorker(Guid guid)
     {
-        if ((uint)index >= (uint)furnaces.Count)
-            throw new ArgumentOutOfRangeException(nameof(index));
-
-        _workerCts[index].Cancel();
-
-        if (closeChannels)
-        {
-            _stateChannels[index].Writer.TryComplete();
-            _setChannels[index].Writer.TryComplete();
-        }
-    }
-
-    /// <summary>
-    /// Cancels all running furnace workers
-    /// </summary>
-    private void CancelAll(bool closeChannels = true)
-    {
-        if (closeChannels)
-        {
-            for (int i = 0; i < furnaces.Count; i++)
-            {
-                _setChannels[i].Writer.TryComplete();
-                _stateChannels[i].Writer.TryComplete();
-            }
-        }
+        _workerCts[guid].Cancel();
     }
 
     public void Dispose()
     {
-        CancelAll(closeChannels: true);
-
-        foreach (var cts in _workerCts)
+        foreach (var cts in _workerCts.Values)
             cts.Dispose();
     }
 }

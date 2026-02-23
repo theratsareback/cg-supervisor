@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Channels;
 using furnace.eurotherm;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 
 namespace furnace.grpc;
 
@@ -32,7 +33,7 @@ public class StreamServiceImpl : StreamService.StreamServiceBase
                 {
                     if (msg.Seq > latestClientSeq)
                     {
-                        List<FurnaceSet>? newSets = JsonConvert.DeserializeObject<List<FurnaceSet>>(msg.Payload);
+                        var newSets = JsonConvert.DeserializeObject<ConcurrentDictionary<Guid, FurnaceSet>>(msg.Payload);
                         if (newSets != null)
                         {
                             _coord.SetSetValues(newSets);

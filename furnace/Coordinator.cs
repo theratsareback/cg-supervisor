@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace furnace;
 
-
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Hosting;
 
 public sealed class Coordinator : IHostedService, IDisposable
@@ -38,14 +38,14 @@ public sealed class Coordinator : IHostedService, IDisposable
         furnaceScheduler.NewFurnace(init);
     }
 
-    public void RemoveFurnace(int index)
+    public void RemoveFurnace(Guid guid)
     {
-        furnaceScheduler.RemoveFurnace(index);
+        furnaceScheduler.RemoveFurnace(guid);
     }
     
-    public void ModifyFurnace(int index, FurnaceInit init)
+    public void ModifyFurnace(Guid guid, FurnaceInit init)
     {
-        furnaceScheduler.ModifyFurnace(index, init);
+        furnaceScheduler.ModifyFurnace(guid, init);
     }
 
     public void NewProfile(ProfileDef profile)
@@ -66,14 +66,6 @@ public sealed class Coordinator : IHostedService, IDisposable
     public List<ProfileDef> RequestProfiles()
     {
         return profileHandler.profiles;
-    }
-
-    /// <summary>
-    /// Sends the furnace inits currently in the furnace scheduler to the frontend via GRPC
-    /// </summary>
-    public List<FurnaceInit> RequestFurnaces()
-    {
-        return furnaceScheduler.GetInits();
     }
     
     /// <summary>
@@ -100,9 +92,9 @@ public sealed class Coordinator : IHostedService, IDisposable
         return profileHandler.profiles;
     }
 
-    public void SetSetValue(int index, FurnaceSet newSet)
+    public void SetSetValue(Guid target, FurnaceSet newSet)
     {
-        furnaceScheduler.setValues[index] = newSet;
+        furnaceScheduler.setValues[target] = newSet;
     }
 
     public void Update()
@@ -111,13 +103,13 @@ public sealed class Coordinator : IHostedService, IDisposable
         furnaceScheduler.Push();
     }
 
-    public List<FurnaceState> GetStateValues()
+    public ConcurrentDictionary<Guid, FurnaceState> GetStateValues()
     {
         furnaceScheduler.Pull();
         return furnaceScheduler.stateValues;
     }
 
-    public void SetSetValues(List<FurnaceSet> newSets)
+    public void SetSetValues(ConcurrentDictionary<Guid, FurnaceSet> newSets)
     {
         furnaceScheduler.setValues = newSets;
         furnaceScheduler.Push();
@@ -134,12 +126,12 @@ public sealed class Coordinator : IHostedService, IDisposable
                 NewFurnace(init);
                 return "";
 
-            case (EventType.RemoveFurnace, var _):
-                RemoveFurnace(index);
+            case (EventType.RemoveFurnace, Guid guid):
+                RemoveFurnace(guid);
                 return "";
 
-            case (EventType.ModifyFurnace, FurnaceInit init):
-                ModifyFurnace(index, init);
+            case (EventType.ModifyFurnace, KeyValuePair<FurnaceInit, Guid>(FurnaceInit init, Guid guid)):
+                ModifyFurnace(guid, init);
                 return "";
 
             case (EventType.NewProfile, ProfileDef profile):
@@ -158,7 +150,7 @@ public sealed class Coordinator : IHostedService, IDisposable
                 return JsonConvert.SerializeObject(RequestProfiles());
 
             case (EventType.RequestFurnaces, var _):
-                return JsonConvert.SerializeObject(furnaceScheduler._furnacesInit);
+                return JsonConvert.SerializeObject(furnaceScheduler.GetInits());
 
             case (EventType.SetFurnaceProfile, ProfileDef profile):
                 SetFurnaceProfile(index, profile);

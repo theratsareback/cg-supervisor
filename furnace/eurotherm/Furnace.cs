@@ -15,14 +15,15 @@ using furnace.camera;
 public class Furnace
 {
     public string furnaceLabel;
-    public ProcessState state;
+    public FurnaceInit GetInit;
+    private ProcessState state;
     private Eurotherm Controller;
     private StepperController? stepper;
     private Capture? camera;
     private CancellationTokenSource? _cts;
     private bool isEnabled = false;
-    private ChannelReader<FurnaceSet> _in;
-    private ChannelWriter<FurnaceState> _out;
+    private Channel<FurnaceSet> _in;
+    private Channel<FurnaceState> _out;
     private Channel<ProcessState> _statechannel;
     private Channel<Profile> _profilechannel;
     private Profile? activeProfile;
@@ -31,21 +32,28 @@ public class Furnace
     private double _processValue;
     private AlarmStatus _underrange, _overrange, _sensor, _rsp;
     private object _alarmLock = new();
-    private readonly BoundedChannelOptions opts = new BoundedChannelOptions(1)
+    private readonly BoundedChannelOptions _inOpts = new BoundedChannelOptions(1)
         {
             FullMode = BoundedChannelFullMode.DropOldest,
             SingleReader = true,
             SingleWriter = false
         };
+    private readonly BoundedChannelOptions _outOpts = new BoundedChannelOptions(1)
+        {
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = false,
+            SingleWriter = true
+        };
 
-    public Furnace(FurnaceInit init, Channel<FurnaceSet> setChannel, Channel<FurnaceState> stateChannel)
+    public Furnace(FurnaceInit init)
     {
-        _in = setChannel;
-        _out = stateChannel;
+        _in = Channel.CreateBounded<FurnaceSet>(_inOpts);
+        _out = Channel.CreateBounded<FurnaceState>(_outOpts);
         furnaceLabel = init.furnaceLabel;
+        GetInit = init;
         Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
-        _statechannel = Channel.CreateBounded<ProcessState>(opts);
-        _profilechannel = Channel.CreateBounded<Profile>(opts);
+        _statechannel = Channel.CreateBounded<ProcessState>(_inOpts);
+        _profilechannel = Channel.CreateBounded<Profile>(_inOpts);
 
         //camera = new Capture(camIp, camPort);
         //camera.Start();
@@ -54,15 +62,18 @@ public class Furnace
     
     }
 
-    public void ModifyFurnace(FurnaceInit init, Channel<FurnaceSet> setChannel, Channel<FurnaceState> stateChannel)
+    public void Push(FurnaceSet set)
     {
-        _in = setChannel;
-        _out = stateChannel;
-        furnaceLabel = init.furnaceLabel;
-        Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
-        //camera = new Capture(camIp, camPort);
-        //camera.Start();
-        //TODO MOTORS
+        _in.Writer.TryWrite(set);
+    }
+
+    public FurnaceState? Pull()
+    {
+        if (_out.Reader.TryRead(out var x))
+        {
+            return x;
+        }
+        return null;
     }
 
     public void SetSetpoint(double setpoint)
@@ -102,9 +113,6 @@ public class Furnace
 
     /// <summary>
     /// Checks the status of the furnace's Eurotherm.
-    /// Returns a value of 0 for active, 1 if no alarms are on but the heater is disabled, 
-    /// 2 if there is an active alarm and the furnace is enabled, and 3 if the furnace is disabled with an alarm.
-    /// This could be used to make a reference graphic where 0 is a green circle, 1 is grey, and 2/3 are both red.
     /// </summary>
     /// <returns></returns>
     public FurnaceStatus GetStatus()
@@ -157,7 +165,7 @@ public class Furnace
         try
         {
             FurnaceSet newSet;
-            newSet = await _in.ReadAsync(token);
+            newSet = await _in.Reader.ReadAsync(token);
             state = ProcessState.Stop;
             activeProfile = await _profilechannel.Reader.ReadAsync(token);
 
@@ -165,7 +173,7 @@ public class Furnace
             {
                 token.ThrowIfCancellationRequested();
 
-                while (_in.TryRead(out var latest))
+                while (_in.Reader.TryRead(out var latest))
                 {
                     newSet = latest;
                 }
@@ -210,6 +218,10 @@ public class Furnace
                 {
                     Enable();
                 }
+                else
+                {
+                    Disable();
+                }
 
                 if (_status == FurnaceStatus.Alarm)
                 {
@@ -236,12 +248,12 @@ public class Furnace
                 if (activeProfile != null)
                 {
                     FurnaceState newState = new FurnaceState(furnaceLabel, activeProfile.Label, _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, activeProfile.state.Status, (long)activeProfile.OnTimer.ElapsedSeconds);
-                    _out.TryWrite(newState);
+                    _out.Writer.TryWrite(newState);
                 }
                 else
                 {
                     FurnaceState newState = new FurnaceState(furnaceLabel, "None", _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, ProfileStatus.Stopped, 0);
-                    _out.TryWrite(newState);
+                    _out.Writer.TryWrite(newState);
                 }
             }
         }
