@@ -62,7 +62,7 @@ public class FurnaceScheduler : IDisposable
             File.WriteAllText(@"furnaces.json", inits);
         }
 
-        _ = furnaceDict[guid].Run(cts.Token);
+        furnaceDict[guid].Run(cts.Token);
         _workerCts.AddOrUpdate(guid, cts, (_, cts) => cts);
     }
 
@@ -86,7 +86,7 @@ public class FurnaceScheduler : IDisposable
         var index = _furnacesInit.IndexOf(furnaceDict[guid].GetInit);
         Furnace furnace = new Furnace(init);
 
-        _ = furnace.Run(cts.Token);
+        furnace.Run(cts.Token);
         _workerCts[guid] = cts;
         _furnacesInit[index] = init;
 

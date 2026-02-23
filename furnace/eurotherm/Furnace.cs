@@ -160,30 +160,31 @@ public class Furnace
         }
     }
 
-    public async Task Run(CancellationToken token)
+    public async void Run(CancellationToken token)
     {
         try
         {
             FurnaceSet newSet;
-            newSet = await _in.Reader.ReadAsync(token);
+            //newSet = await _in.Reader.ReadAsync(token);
+            newSet = default;
             state = ProcessState.Stop;
-            activeProfile = await _profilechannel.Reader.ReadAsync(token);
+            //activeProfile = await _profilechannel.Reader.ReadAsync(token);
 
             while (!token.IsCancellationRequested)
             {
                 token.ThrowIfCancellationRequested();
 
-                while (_in.Reader.TryRead(out var latest))
+                if (_in.Reader.TryRead(out var set))
                 {
-                    newSet = latest;
+                    newSet = set;
                 }
-                while (_profilechannel.Reader.TryRead(out var latest))
+                if (_profilechannel.Reader.TryRead(out var newProfile))
                 {
-                    activeProfile = latest;
+                    activeProfile = newProfile;
                 }
-                while (_statechannel.Reader.TryRead(out var latest))
+                if (_statechannel.Reader.TryRead(out var zoop))
                 {
-                    state = latest;
+                    state = zoop;
                 }
 
                 _processValue = GetProcessValue();
