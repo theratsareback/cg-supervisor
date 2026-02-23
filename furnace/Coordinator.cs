@@ -150,6 +150,7 @@ public sealed class Coordinator : IHostedService, IDisposable
                 return JsonConvert.SerializeObject(RequestProfiles());
 
             case (EventType.RequestFurnaces, var _):
+                Console.WriteLine("Furnaces requested");
                 return JsonConvert.SerializeObject(furnaceScheduler.GetInits());
 
             case (EventType.SetFurnaceProfile, ProfileDef profile):

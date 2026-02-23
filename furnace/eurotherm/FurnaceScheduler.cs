@@ -2,6 +2,8 @@ namespace furnace.eurotherm;
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using System.Threading.Channels;
 using Newtonsoft.Json;
@@ -50,28 +52,18 @@ public class FurnaceScheduler : IDisposable
     public void NewFurnace(FurnaceInit init)
     {
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
-
         _furnacesInit ??= [];
-        Furnace furnace = new Furnace(init);
         Guid guid = Guid.NewGuid();
-        _ = furnaceDict.Append(new KeyValuePair<Guid, Furnace>(guid, furnace));
+        furnaceDict.AddOrUpdate(guid, (_) => new Furnace(init), (guid, _) => FurnaceUpdateFactory(guid, init));
         if (!_furnacesInit.Contains(init))
         {
             _furnacesInit.Add(init);
-            List<FurnaceInit> actives = [];
-            foreach (FurnaceInit i in _furnacesInit)
-            {
-                if (i.index >= 0)
-                {
-                    actives.Add(i);
-                }
-            }
-            string inits = JsonConvert.SerializeObject(actives);
+            string inits = JsonConvert.SerializeObject(_furnacesInit);
             File.WriteAllText(@"furnaces.json", inits);
         }
 
-        _ = furnace.Run(cts.Token);
-        _workerCts.Append(new KeyValuePair<Guid, CancellationTokenSource>(guid, cts));
+        _ = furnaceDict[guid].Run(cts.Token);
+        _workerCts.AddOrUpdate(guid, cts, (_, cts) => cts);
     }
 
     /// <summary>
@@ -80,20 +72,30 @@ public class FurnaceScheduler : IDisposable
     /// <param name="init">Init struct containing new information for furnace</param>
     public void ModifyFurnace(Guid guid, FurnaceInit init)
     {
+        
+        furnaceDict.AddOrUpdate(guid, (_) => new Furnace(init), (guid, _) => FurnaceUpdateFactory(guid, init));
+
+        string inits = JsonConvert.SerializeObject(_furnacesInit);
+        File.WriteAllText(@"furnaces.json", inits);
+    }
+
+    private Furnace FurnaceUpdateFactory(Guid guid, FurnaceInit init)
+    {
         CancelWorker(guid);
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
         var index = _furnacesInit.IndexOf(furnaceDict[guid].GetInit);
         Furnace furnace = new Furnace(init);
-        furnaceDict[guid] = furnace;
 
         _ = furnace.Run(cts.Token);
         _workerCts[guid] = cts;
         _furnacesInit[index] = init;
 
-        string inits = JsonConvert.SerializeObject(_furnacesInit);
-        File.WriteAllText(@"furnaces.json", inits);
+        return furnace;
     }
-    
+
+
+
+
     public void RemoveFurnace(Guid guid)
     {
         _furnacesInit ??= [];
@@ -119,7 +121,8 @@ public class FurnaceScheduler : IDisposable
         var dict = new ConcurrentDictionary<Guid, FurnaceInit>();
         foreach (KeyValuePair<Guid, Furnace> furnace in furnaceDict)
         {
-            _ = dict.Append(new KeyValuePair<Guid,FurnaceInit>(furnace.Key, furnace.Value.GetInit));
+            Console.WriteLine(furnace.Value.GetInit);
+            dict.AddOrUpdate(furnace.Key, furnace.Value.GetInit, (_, _) => furnace.Value.GetInit);
         }
         return dict;
     }
