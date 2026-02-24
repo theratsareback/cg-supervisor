@@ -61,8 +61,7 @@ public class FurnaceScheduler : IDisposable
             string inits = JsonConvert.SerializeObject(_furnacesInit);
             File.WriteAllText(@"furnaces.json", inits);
         }
-
-        furnaceDict[guid].Run(cts.Token);
+        Task.Run(async () => furnaceDict[guid].Run(cts.Token), cts.Token);
         _workerCts.AddOrUpdate(guid, cts, (_, cts) => cts);
     }
 
@@ -86,7 +85,7 @@ public class FurnaceScheduler : IDisposable
         var index = _furnacesInit.IndexOf(furnaceDict[guid].GetInit);
         Furnace furnace = new Furnace(init);
 
-        furnace.Run(cts.Token);
+        Task.Run(async () => furnace.Run(cts.Token), cts.Token);
         _workerCts[guid] = cts;
         _furnacesInit[index] = init;
 
@@ -121,7 +120,6 @@ public class FurnaceScheduler : IDisposable
         var dict = new ConcurrentDictionary<Guid, FurnaceInit>();
         foreach (KeyValuePair<Guid, Furnace> furnace in furnaceDict)
         {
-            Console.WriteLine(furnace.Value.GetInit);
             dict.AddOrUpdate(furnace.Key, furnace.Value.GetInit, (_, _) => furnace.Value.GetInit);
         }
         return dict;

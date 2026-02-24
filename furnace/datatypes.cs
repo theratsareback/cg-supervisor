@@ -41,10 +41,6 @@ public class FurnaceInit
 /// </summary>
 public class FurnaceState
 {
-    /// <summary>
-    /// Used to determine if a furnace still exists. If false, the furnace at this index should be ignored.
-    /// </summary>
-    public bool _active;
     public string? furnaceLabel;
     public double processValue;
     public double setpoint;
@@ -59,7 +55,6 @@ public class FurnaceState
 
     public FurnaceState(string _furnaceLabel, string _profileName, double _processValue, double _setpoint, FurnaceStatus _status, AlarmStatus _underrange, AlarmStatus _overrange, AlarmStatus _sensor, AlarmStatus _rsp, ProfileStatus _state, long _time_s)
     {
-        _active = true;
         furnaceLabel = _furnaceLabel;
         processValue = _processValue;
         setpoint = _setpoint;
@@ -70,10 +65,6 @@ public class FurnaceState
         rspFailure = _rsp;
         state = _state;
         time_s = _time_s;
-    }
-    public FurnaceState()
-    {
-        _active = false;
     }
 }
 

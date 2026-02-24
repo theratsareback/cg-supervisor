@@ -160,7 +160,7 @@ public class Furnace
         }
     }
 
-    public async void Run(CancellationToken token)
+    public async Task Run(CancellationToken token)
     {
         try
         {
