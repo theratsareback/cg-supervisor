@@ -1,4 +1,0 @@
-Profile constructor
-Event class for new profiles, furnaces, etc
-Work out null reference assignments
-Possibly pass first set frame to furnace constructor

@@ -16,7 +16,7 @@ public class Furnace
 {
     public string furnaceLabel;
     public FurnaceInit GetInit;
-    private ProcessState state;
+    private ProfileStatus state;
     private Eurotherm Controller;
     private StepperController? stepper;
     private Capture? camera;
@@ -24,7 +24,7 @@ public class Furnace
     private bool isEnabled = false;
     private Channel<FurnaceSet> _in;
     private Channel<FurnaceState> _out;
-    private Channel<ProcessState> _statechannel;
+    private Channel<ProfileStatus> _statechannel;
     private Channel<Profile> _profilechannel;
     private Profile? activeProfile;
     private FurnaceStatus _status;
@@ -52,7 +52,7 @@ public class Furnace
         furnaceLabel = init.furnaceLabel;
         GetInit = init;
         Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
-        _statechannel = Channel.CreateBounded<ProcessState>(_inOpts);
+        _statechannel = Channel.CreateBounded<ProfileStatus>(_inOpts);
         _profilechannel = Channel.CreateBounded<Profile>(_inOpts);
 
         //camera = new Capture(camIp, camPort);
@@ -144,7 +144,7 @@ public class Furnace
         }
     }
 
-    public void SetState(ProcessState newState)
+    public void SetState(ProfileStatus newState)
     {
         _statechannel.Writer.TryWrite(newState);
     }
@@ -167,7 +167,7 @@ public class Furnace
             FurnaceSet newSet;
             //newSet = await _in.Reader.ReadAsync(token);
             newSet = default;
-            state = ProcessState.Stop;
+            state = ProfileStatus.Stopped;
             //activeProfile = await _profilechannel.Reader.ReadAsync(token);
 
             while (!token.IsCancellationRequested)
@@ -194,13 +194,13 @@ public class Furnace
                 {
                     switch (state)
                     {
-                        case ProcessState.Continue:
+                        case ProfileStatus.Running:
                             activeProfile.Start();
                             break;
-                        case ProcessState.Pause:
+                        case ProfileStatus.Paused:
                             activeProfile.Pause();
                             break;
-                        case ProcessState.Stop:
+                        case ProfileStatus.Stopped:
                             activeProfile.Stop();
                             break;
                     }

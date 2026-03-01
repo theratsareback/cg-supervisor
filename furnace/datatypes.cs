@@ -68,11 +68,6 @@ public class FurnaceState
     }
 }
 
-/// <summary>
-/// ProcessState is used to tell a furnace to resume, pause, or stop following the profile.
-/// </summary>
-public enum ProcessState { Stop, Pause, Continue }
-
 public enum ProfileStatus { Running, Paused, Stopped }
 
 /// <summary>

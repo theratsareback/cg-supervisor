@@ -79,7 +79,7 @@ public sealed class Coordinator : IHostedService, IDisposable
     /// <summary>
     /// Pause, stop, or resume following of profile
     /// </summary>
-    public void SetState(int index, ProcessState state)
+    public void SetState(int index, ProfileStatus state)
     {
         furnaceScheduler.furnaces[index].SetState(state);
     }
