@@ -5,67 +5,39 @@ using OpenCvSharp;
 namespace furnace;
 
 /// <summary>
-/// Class <c>FurnaceInit</c> is a datatype containing the values to initialize one furnace. This is stored in a .JSON on the backend computers.
+/// Record <c>FurnaceInit</c> is a datatype containing the values to initialize one furnace. This is stored in a .JSON on the backend computers.
 /// To create a new furnace, an instance of this object must be created on the frontend and sent to the backend.
 /// </summary>
-public class FurnaceInit
+public readonly record struct FurnaceInit
 {
-    public string furnaceLabel;
-    public int index;
-    public int eurothermPort;
-    public string eurothermIp;
-
-    public int cameraPort;
-    public string cameraIp;
-
-    public string pullerIp;
-    public byte pullerSlaveId;
-    public byte rotaterSlaveId;
-
-    public FurnaceInit(string _furnaceLabel, int _index, int _eurothermPort, string _eurothermIp, int _cameraPort, string _cameraIp, string _pullerIp, byte _pullerSlaveId, byte _rotaterSlaveId)
-    {
-        furnaceLabel = _furnaceLabel;
-        index = _index;
-        eurothermPort = _eurothermPort;
-        eurothermIp = _eurothermIp;
-        cameraPort = _cameraPort;
-        cameraIp = _cameraIp;
-        pullerIp = _pullerIp;
-        pullerSlaveId = _pullerSlaveId;
-        rotaterSlaveId = _rotaterSlaveId;
-    }
+    public required string furnaceLabel {get; init;}
+    public int eurothermPort {get; init;}
+    public required string eurothermIp {get; init;}
+    public int cameraPort {get; init;}
+    public required string cameraIp {get; init;}
+    public required string pullerIp {get; init;}
+    public byte pullerPort {get; init;}
+    public double diameter_kp {get; init;}
+    public double diameter_ti {get; init;}
+    public double diameter_td {get; init;}
 }
 
 /// <summary>
 /// Class <c>FurnaceState</c> contains information about a single furnace's current state, to be sent to the frontend
 /// </summary>
-public class FurnaceState
+public readonly record struct FurnaceState
 {
-    public string? furnaceLabel;
-    public double processValue;
-    public double setpoint;
-    public double heaterCurrent;
-    public FurnaceStatus status;
-    public AlarmStatus underrangeAlarm;
-    public AlarmStatus overrangeAlarm;
-    public AlarmStatus sensorBreak;
-    public AlarmStatus rspFailure;
-    public ProfileStatus state;
-    public long time_s;
-
-    public FurnaceState(string _furnaceLabel, string _profileName, double _processValue, double _setpoint, FurnaceStatus _status, AlarmStatus _underrange, AlarmStatus _overrange, AlarmStatus _sensor, AlarmStatus _rsp, ProfileStatus _state, long _time_s)
-    {
-        furnaceLabel = _furnaceLabel;
-        processValue = _processValue;
-        setpoint = _setpoint;
-        status = _status;
-        underrangeAlarm = _underrange;
-        overrangeAlarm = _overrange;
-        sensorBreak = _sensor;
-        rspFailure = _rsp;
-        state = _state;
-        time_s = _time_s;
-    }
+    public required string furnaceLabel {get; init;}
+    public double processValue {get; init;}
+    public double setpoint {get; init;}
+    public double heaterCurrent {get; init;}
+    public FurnaceStatus furnaceStatus {get; init;}
+    public AlarmStatus underrangeAlarm {get; init;}
+    public AlarmStatus overrangeAlarm {get; init;}
+    public AlarmStatus sensorBreak {get; init;}
+    public AlarmStatus rspFailure {get; init;}
+    public ProfileStatus profileStatus {get; init;}
+    public long time_s {get; init;}
 }
 
 public enum ProfileStatus { Running, Paused, Stopped }
@@ -76,7 +48,7 @@ public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus { Off, OnAck, OffNonAck, OnNonAck }
 
-public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile, RequestProfiles, RequestFurnaces, SetFurnaceProfile, AckFurnaceAlarm }
+public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile, RequestProfiles, RequestFurnaces, SetFurnaceProfile, SetProfileStatus, AckFurnaceAlarm }
 
 /// <summary>
 /// Struct <c>FurnaceSet</c> contains the state of the frontend interface to be streamed to the backend.

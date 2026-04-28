@@ -71,17 +71,17 @@ public sealed class Coordinator : IHostedService, IDisposable
     /// <summary>
     /// Sets a new active profile for a furnace. Only has an effect if the furnace is stopped or if there is no active profile.
     /// </summary>
-    public void SetFurnaceProfile(int index, ProfileDef profileDef)
+    public void SetFurnaceProfile(Guid guid, ProfileDef profileDef)
     {
-        furnaceScheduler.furnaces[index].SetProfile(profileDef);
+        furnaceScheduler.furnaceDict[guid].SetProfile(profileDef);
     }
 
     /// <summary>
     /// Pause, stop, or resume following of profile
     /// </summary>
-    public void SetState(int index, ProfileStatus state)
+    public void SetProfileStatus(Guid guid, ProfileStatus status)
     {
-        furnaceScheduler.furnaces[index].SetState(state);
+        furnaceScheduler.furnaceDict[guid].SetProfileStatus(status);
     }
 
     /// <summary>
@@ -130,7 +130,7 @@ public sealed class Coordinator : IHostedService, IDisposable
                 RemoveFurnace(guid);
                 return "";
 
-            case (EventType.ModifyFurnace, KeyValuePair<FurnaceInit, Guid>(FurnaceInit init, Guid guid)):
+            case (EventType.ModifyFurnace, KeyValuePair<Guid, FurnaceInit>(Guid guid, FurnaceInit init)):
                 ModifyFurnace(guid, init);
                 return "";
 
@@ -152,12 +152,16 @@ public sealed class Coordinator : IHostedService, IDisposable
             case (EventType.RequestFurnaces, var _):
                 return JsonConvert.SerializeObject(furnaceScheduler.GetInits());
 
-            case (EventType.SetFurnaceProfile, ProfileDef profile):
-                SetFurnaceProfile(index, profile);
+            case (EventType.SetProfileStatus, KeyValuePair<Guid, ProfileStatus>(Guid guid, ProfileStatus newState)):
+                SetProfileStatus(guid, newState);
                 return "";
 
-            case (EventType.AckFurnaceAlarm, var _):
-                furnaceScheduler.furnaces[index].AckAlarms();
+            case (EventType.SetFurnaceProfile, KeyValuePair<Guid, ProfileDef>(Guid guid, ProfileDef profile)):
+                SetFurnaceProfile(guid, profile);
+                return "";
+
+            case (EventType.AckFurnaceAlarm, Guid guid):
+                furnaceScheduler.furnaceDict[guid].AckAlarms();
                 return "";
         }
         return "";

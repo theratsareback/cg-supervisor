@@ -15,7 +15,6 @@ public class FurnaceScheduler : IDisposable
     public ConcurrentDictionary<Guid, FurnaceSet> setValues = [];
     public ConcurrentDictionary<Guid, FurnaceState> stateValues = [];
     public List<FurnaceInit> _furnacesInit = [];
-    public readonly List<Furnace> furnaces = [];
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _workerCts = [];
     private readonly CancellationToken _globalCt;
     private readonly BoundedChannelOptions opts = new BoundedChannelOptions(1)
@@ -103,10 +102,7 @@ public class FurnaceScheduler : IDisposable
         List<FurnaceInit> actives = [];
         foreach (FurnaceInit i in _furnacesInit)
         {
-            if (i.index >= 0)
-            {
-                actives.Add(i);
-            }
+            actives.Add(i);
         }
         string inits = JsonConvert.SerializeObject(actives);
         File.WriteAllText(@"furnaces.json", inits);
@@ -150,7 +146,7 @@ public class FurnaceScheduler : IDisposable
             var x = furnaceDict[key].Pull();
             if (x != null)
             {
-                stateValues[key] = x;
+                stateValues[key] = (FurnaceState)x;
             }
         }
     }

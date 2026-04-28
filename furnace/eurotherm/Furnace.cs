@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using furnace.profile;
 using furnace.stepper;
 using furnace.camera;
+using Microsoft.AspNetCore.Identity;
 
 /// <summary>
 /// Class <c>Furnace</c> represents one Eurotherm, camera, and stepper driver.
@@ -144,9 +145,9 @@ public class Furnace
         }
     }
 
-    public void SetState(ProfileStatus newState)
+    public void SetProfileStatus(ProfileStatus newStatus)
     {
-        _statechannel.Writer.TryWrite(newState);
+        _statechannel.Writer.TryWrite(newStatus);
     }
     
     /// <summary>
@@ -248,12 +249,38 @@ public class Furnace
                 SetSetpoint(_setpoint);
                 if (activeProfile != null)
                 {
-                    FurnaceState newState = new FurnaceState(furnaceLabel, activeProfile.Label, _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, activeProfile.state.Status, (long)activeProfile.OnTimer.ElapsedSeconds);
+                    FurnaceState newState = new FurnaceState
+                    {
+                        furnaceLabel = furnaceLabel,
+                        processValue = _processValue,
+                        setpoint = _setpoint,
+                        furnaceStatus = _status,
+                        underrangeAlarm = _underrange,
+                        overrangeAlarm = _overrange,
+                        sensorBreak = _sensor,
+                        rspFailure = _rsp,
+                        profileStatus = activeProfile.state.Status,
+                        time_s = (long)activeProfile.OnTimer.ElapsedSeconds
+                    };
+
                     _out.Writer.TryWrite(newState);
                 }
                 else
                 {
-                    FurnaceState newState = new FurnaceState(furnaceLabel, "None", _processValue, _setpoint, _status, _underrange, _overrange, _sensor, _rsp, ProfileStatus.Stopped, 0);
+                    FurnaceState newState = new FurnaceState
+                    {
+                        furnaceLabel = furnaceLabel,
+                        processValue = _processValue,
+                        setpoint = _setpoint,
+                        furnaceStatus = _status,
+                        underrangeAlarm = _underrange,
+                        overrangeAlarm = _overrange,
+                        sensorBreak = _sensor,
+                        rspFailure = _rsp,
+                        profileStatus = ProfileStatus.Stopped,
+                        time_s = 0
+                    };
+                    
                     _out.Writer.TryWrite(newState);
                 }
             }
