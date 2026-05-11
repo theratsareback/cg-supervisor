@@ -1,0 +1,23 @@
+syntax = "proto3";
+option csharp_namespace = "furnace.grpc";
+
+import "google/protobuf/empty.proto";
+
+service StepperService {
+    rpc SetStepper(StepperBuf) returns (google.protobuf.Empty);
+
+    rpc StreamData(StreamRequest) returns (stream DataPacket);
+}
+
+message StepperBuf {
+    uint32 stepper_id = 1;
+    uint64 frequency = 2;
+    bool direction = 3;
+}
+ 
+message StreamRequest { }
+
+message DataPacket {
+    repeated uint32 timestamps = 1 [packed = true];
+    repeated double values = 2 [packed = true];
+}

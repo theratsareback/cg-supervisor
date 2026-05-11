@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using furnace.profile;
 using furnace.stepper;
 using furnace.camera;
+using furnace.diameter;
 using Microsoft.AspNetCore.Identity;
 
 /// <summary>
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Identity;
 /// </summary>
 public class Furnace
 {
+    private DiameterControl _diameterControl;
     public string furnaceLabel;
     public FurnaceInit GetInit;
     private ProfileStatus state;
@@ -27,9 +29,11 @@ public class Furnace
     private Channel<FurnaceState> _out;
     private Channel<ProfileStatus> _statechannel;
     private Channel<Profile> _profilechannel;
+    private Channel<double> _trimchannel;
     private Profile? activeProfile;
     private FurnaceStatus _status;
     private double _setpoint;
+    private double _trim;
     private double _processValue;
     private AlarmStatus _underrange, _overrange, _sensor, _rsp;
     private object _alarmLock = new();
@@ -46,7 +50,7 @@ public class Furnace
             SingleWriter = true
         };
 
-    public Furnace(FurnaceInit init)
+    public Furnace(FurnaceInit init, DiameterControl diameterControl)
     {
         _in = Channel.CreateBounded<FurnaceSet>(_inOpts);
         _out = Channel.CreateBounded<FurnaceState>(_outOpts);
@@ -55,6 +59,8 @@ public class Furnace
         Controller = new Eurotherm(init.eurothermIp, init.eurothermPort);
         _statechannel = Channel.CreateBounded<ProfileStatus>(_inOpts);
         _profilechannel = Channel.CreateBounded<Profile>(_inOpts);
+        _trimchannel = Channel.CreateBounded<double>(_inOpts);
+        _diameterControl = diameterControl;
 
         //camera = new Capture(camIp, camPort);
         //camera.Start();
@@ -82,6 +88,11 @@ public class Furnace
         Controller.Heater.SP(setpoint);
     }
 
+    public void SetTrim(double trim)
+    {
+        _ = _trimchannel.Writer.WriteAsync(trim);
+    }
+
     /// <summary>
     /// Enable heating element output. Safe to call if already enabled.
     /// </summary>
@@ -103,6 +114,20 @@ public class Furnace
         {
             Controller.Heater.Disable();
             isEnabled = false;
+        }
+    }
+
+    public void Toggle()
+    {
+        if (isEnabled)
+        {
+            Controller.Heater.Disable();
+            isEnabled = false;
+        }
+        else
+        {
+            Controller.Heater.Enable();
+            isEnabled = true;
         }
     }
 
@@ -161,6 +186,11 @@ public class Furnace
         }
     }
 
+    public void Seek(TimeSpan timeSpan)
+    {
+        activeProfile.OnTimer.Seek(timeSpan);
+    }
+
     public async Task Run(CancellationToken token)
     {
         try
@@ -182,6 +212,10 @@ public class Furnace
                 if (_profilechannel.Reader.TryRead(out var newProfile))
                 {
                     activeProfile = newProfile;
+                }
+                if (_trimchannel.Reader.TryRead(out var zrim))
+                {
+                    _trim = zrim;
                 }
                 if (_statechannel.Reader.TryRead(out var zoop))
                 {
@@ -209,20 +243,11 @@ public class Furnace
 
                 if (newSet.manualSetpoint)
                 {
-                    _setpoint = newSet.setpoint + newSet.trim;
+                    _setpoint = newSet.setpoint + _trim;
                 }
                 else if (activeProfile != null)
                 {
-                    _setpoint = activeProfile.GetSetpoint() + newSet.trim; // TODO integrate camera trim here
-                }
-
-                if (newSet.enable)
-                {
-                    Enable();
-                }
-                else
-                {
-                    Disable();
+                    _setpoint = activeProfile.GetSetpoint() + _trim + _diameterControl.GetTrim();
                 }
 
                 if (_status == FurnaceStatus.Alarm)

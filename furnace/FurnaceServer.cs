@@ -34,12 +34,15 @@ public sealed class FurnaceServer : IAsyncDisposable
         builder.Services.AddGrpc();
 
         builder.Services.AddSingleton<Coordinator>();
+        builder.Services.AddSingleton<StepperGrpcClient>();
         builder.Services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<Coordinator>());
+        builder.Services.AddSingleton(sp => sp.GetRequiredService<StepperGrpcClient>());
 
         var app = builder.Build();
 
         app.MapGrpcService<StreamServiceImpl>();
         app.MapGrpcService<EventsServiceImpl>();
+        app.MapGrpcService<StepperGrpcClient>();
         app.MapGet("/", () => "gRPC server is running.");
 
         _app = app;

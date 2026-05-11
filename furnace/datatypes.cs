@@ -31,6 +31,7 @@ public readonly record struct FurnaceState
     public double processValue {get; init;}
     public double setpoint {get; init;}
     public double heaterCurrent {get; init;}
+    public double diameterTrim {get; init; }
     public FurnaceStatus furnaceStatus {get; init;}
     public AlarmStatus underrangeAlarm {get; init;}
     public AlarmStatus overrangeAlarm {get; init;}
@@ -48,19 +49,38 @@ public enum ProfileStatus { Running, Paused, Stopped }
 public enum FurnaceStatus { Enabled, Disabled, Alarm }
 public enum AlarmStatus { Off, OnAck, OffNonAck, OnNonAck }
 
-public enum EventType { NewFurnace, RemoveFurnace, ModifyFurnace, NewProfile, RemoveProfile, ModifyProfile, RequestProfiles, RequestFurnaces, SetFurnaceProfile, SetProfileStatus, AckFurnaceAlarm }
+public enum EventType 
+{   
+    NewFurnace, 
+    RemoveFurnace, 
+    ModifyFurnace, 
+    NewProfile, 
+    RemoveProfile, 
+    ModifyProfile, 
+    RequestProfiles, 
+    RequestFurnaces, 
+    SetFurnaceProfile, 
+    SetProfileStatus, 
+    AckFurnaceAlarm, 
+    SetSteppers, 
+    Enable, 
+    SetSetpoint,
+    StartDiameterControl,
+    SetManTrim,
+    SetGains,
+    SeekTime
+}
 
 /// <summary>
 /// Struct <c>FurnaceSet</c> contains the state of the frontend interface to be streamed to the backend.
 /// Old information is ignored. Used only to convey continuous data.
 /// </summary>
-public struct FurnaceSet
+public class FurnaceSet
 {
-    public double setpoint;
-    public double trim;
-    public bool manualSetpoint;
-    public bool enable;
-    // TODO motor speeds
+    public double setpoint; // to be deprecated
+    public double trim; //deprecated
+    public bool manualSetpoint; // to be deprecated
+    public bool enable; // deprecated
 }
 
 /// <summary>

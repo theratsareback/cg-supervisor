@@ -7,17 +7,22 @@ using Newtonsoft.Json;
 namespace furnace;
 
 using System.Collections.Concurrent;
+using furnace.diameter;
+using furnace.grpc;
 using Microsoft.Extensions.Hosting;
 
 public sealed class Coordinator : IHostedService, IDisposable
 {
-    private FurnaceScheduler? furnaceScheduler;
-    private ProfileHandler? profileHandler;
+    private FurnaceScheduler furnaceScheduler;
+    private ProfileHandler profileHandler;
+    private DiameterControl diameterControl;
+    private StepperGrpcClient stepperClient;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        furnaceScheduler = new FurnaceScheduler(cancellationToken);
+        furnaceScheduler = new FurnaceScheduler(cancellationToken, diameterControl);
         profileHandler = new ProfileHandler();
+        diameterControl = new DiameterControl(4, 6.92, 15, 45, 0.1);
         return Task.CompletedTask;
     }
 
@@ -29,8 +34,7 @@ public sealed class Coordinator : IHostedService, IDisposable
 
     public void Dispose()
     {
-        furnaceScheduler?.Dispose();
-        furnaceScheduler = null;
+        furnaceScheduler.Dispose();
     }
     
     public void NewFurnace(FurnaceInit init)
@@ -163,7 +167,41 @@ public sealed class Coordinator : IHostedService, IDisposable
             case (EventType.AckFurnaceAlarm, Guid guid):
                 furnaceScheduler.furnaceDict[guid].AckAlarms();
                 return "";
+
+            case (EventType.SetSteppers, StepperBuf stepperBuf):
+                stepperClient.SetStepper(stepperBuf.StepperId, stepperBuf.Frequency, stepperBuf.Direction);
+                return "";
+
+            case (EventType.Enable, Guid guid):
+                furnaceScheduler.furnaceDict[guid].Toggle();
+                return "";
+
+            case(EventType.SetSetpoint, KeyValuePair<Guid, Double>(Guid guid, Double setpoint)):
+                furnaceScheduler.furnaceDict[guid].SetSetpoint(setpoint);
+                return "";
+
+            case(EventType.StartDiameterControl, var _):
+                diameterControl.Start();
+                return "";
+
+            case(EventType.SetManTrim, KeyValuePair<Guid, Double>(Guid guid, Double trim)):
+                furnaceScheduler.furnaceDict[guid].SetTrim(trim);
+                return "";
+
+            case(EventType.SetGains, double kp):
+                diameterControl.SetGain(kp);
+                return "";
+
+            case(EventType.SeekTime, KeyValuePair<Guid, int>(Guid guid, int ms)):
+                TimeSpan time = new TimeSpan(0, 0, 0, 0, ms);
+                furnaceScheduler.furnaceDict[guid].Seek(time);
+                return "";
         }
         return "";
+    }
+
+    public void ProcessMassData(uint[] timeArray, double[] massArray)
+    {
+        diameterControl.AddData(timeArray, massArray);
     }
 }

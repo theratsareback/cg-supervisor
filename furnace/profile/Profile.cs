@@ -18,9 +18,6 @@ public readonly record struct EvalOutput(
     CoordinatorEffect Effect
 );
 
-/// <summary>
-/// This is all ai-generated but seems to work, start debugging from here if there are any problems with profile logic
-/// </summary>
 public static class ProfileMath
 {
     public static EvalOutput Evaluate(

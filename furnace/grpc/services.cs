@@ -7,6 +7,7 @@ using System.Threading.Channels;
 using furnace.eurotherm;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
+using Grpc.Net.Client;
 
 namespace furnace.grpc;
 
@@ -77,22 +78,19 @@ public class EventsServiceImpl : Events.EventsBase
 
     public override Task<EventResponse> SendEvent(Event request, ServerCallContext context)
     {
-        try{
-        Console.WriteLine("Task Invoked");
-        Console.WriteLine(request.Index);
-        Console.WriteLine(request.Payload);
-
-        _logger.LogInformation(
-            "Received event: Type={Type}, Index={Index}, PayloadLength={Len}",
-            request.Type, request.Index, request.Payload?.Length ?? 0);
-        string payload = _coord.Handle(request);
-        var response = new EventResponse
+        try
         {
-            Index = request.Index,
-            Payload = payload
-        };
+            _logger.LogInformation(
+                "Received event: Type={Type}, Index={Index}, PayloadLength={Len}",
+                request.Type, request.Index, request.Payload?.Length ?? 0);
+            string payload = _coord.Handle(request);
+            var response = new EventResponse
+            {
+                Index = request.Index,
+                Payload = payload
+            };
 
-        return Task.FromResult(response);
+            return Task.FromResult(response);
         }
         catch (RpcException ex)
         {
