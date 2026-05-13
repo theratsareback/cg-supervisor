@@ -121,81 +121,123 @@ public sealed class Coordinator : IHostedService, IDisposable
 
     public string Handle(Event _event)
     {   
-        EventType type = (EventType)_event.Type;
-        int index = (int)_event.Index;
-        var EventObject = JsonConvert.DeserializeObject(_event.Payload);
-        switch (type, EventObject)
+        switch ((EventType)_event.Type)
         {
-            case (EventType.NewFurnace, FurnaceInit init):
-                NewFurnace(init);
-                return "";
+            case EventType.NewFurnace:
+                {
+                    FurnaceInit init = JsonConvert.DeserializeObject<FurnaceInit>(_event.Payload);
+                    NewFurnace(init);
+                    return "";
+                }
 
-            case (EventType.RemoveFurnace, Guid guid):
-                RemoveFurnace(guid);
-                return "";
+            case EventType.RemoveFurnace:
+                {
+                    Guid guid = JsonConvert.DeserializeObject<Guid>(_event.Payload);
+                    RemoveFurnace(guid);
+                    return "";
+                }
 
-            case (EventType.ModifyFurnace, KeyValuePair<Guid, FurnaceInit>(Guid guid, FurnaceInit init)):
-                ModifyFurnace(guid, init);
-                return "";
+            case EventType.ModifyFurnace:
+                {
+                    KeyValuePair<Guid, FurnaceInit> pair = JsonConvert.DeserializeObject<KeyValuePair<Guid, FurnaceInit>>(_event.Payload);
+                    ModifyFurnace(pair.Key, pair.Value);
+                    return "";
+                }
 
-            case (EventType.NewProfile, ProfileDef profile):
-                NewProfile(profile);
-                return "";
+            case EventType.NewProfile:
+                {
+                    ProfileDef profile = JsonConvert.DeserializeObject<ProfileDef>(_event.Payload);
+                    NewProfile(profile);
+                    return "";
+                }
 
-            case (EventType.RemoveProfile, ProfileDef profile):
-                RemoveProfile(profile);
-                return "";
+            case EventType.RemoveProfile:
+                {
+                    ProfileDef profile = JsonConvert.DeserializeObject<ProfileDef>(_event.Payload);
+                    RemoveProfile(profile);
+                    return "";
+                }
 
-            case (EventType.ModifyProfile, ProfileDef profile):
-                ModifyProfile(index, profile);
-                return "";
+            case EventType.ModifyProfile:
+                {
+                    KeyValuePair<int, ProfileDef> pair = JsonConvert.DeserializeObject<KeyValuePair<int, ProfileDef>>(_event.Payload);
+                    ModifyProfile(pair.Key, pair.Value);
+                    return "";
+                }
 
-            case (EventType.RequestProfiles, var _):
+            case EventType.RequestProfiles:
                 return JsonConvert.SerializeObject(RequestProfiles());
 
-            case (EventType.RequestFurnaces, var _):
+            case EventType.RequestFurnaces:
                 return JsonConvert.SerializeObject(furnaceScheduler.GetInits());
 
-            case (EventType.SetProfileStatus, KeyValuePair<Guid, ProfileStatus>(Guid guid, ProfileStatus newState)):
-                SetProfileStatus(guid, newState);
-                return "";
+            case EventType.SetProfileStatus:
+                {
+                    KeyValuePair<Guid, ProfileStatus> pair = JsonConvert.DeserializeObject<KeyValuePair<Guid, ProfileStatus>>(_event.Payload);
+                    SetProfileStatus(pair.Key, pair.Value);
+                    return "";
+                }
 
-            case (EventType.SetFurnaceProfile, KeyValuePair<Guid, ProfileDef>(Guid guid, ProfileDef profile)):
-                SetFurnaceProfile(guid, profile);
-                return "";
+            case EventType.SetFurnaceProfile:
+                {
+                    KeyValuePair<Guid, ProfileDef> pair = JsonConvert.DeserializeObject<KeyValuePair<Guid, ProfileDef>>(_event.Payload);
+                    SetFurnaceProfile(pair.Key, pair.Value);
+                    return "";
+                }
 
-            case (EventType.AckFurnaceAlarm, Guid guid):
-                furnaceScheduler.furnaceDict[guid].AckAlarms();
-                return "";
+            case EventType.AckFurnaceAlarm:
+                {
+                    Guid guid = JsonConvert.DeserializeObject<Guid>(_event.Payload);
+                    furnaceScheduler.furnaceDict[guid].AckAlarms();
+                    return "";
+                }
 
-            case (EventType.SetSteppers, StepperBuf stepperBuf):
-                stepperClient.SetStepper(stepperBuf.StepperId, stepperBuf.Frequency, stepperBuf.Direction);
-                return "";
+            case EventType.SetSteppers:
+                {
+                    StepperBuf stepperBuf = JsonConvert.DeserializeObject<StepperBuf>(_event.Payload);
+                    stepperClient.SetStepper(stepperBuf.StepperId, stepperBuf.Frequency, stepperBuf.Direction);
+                    return "";
+                }
 
-            case (EventType.Enable, Guid guid):
-                furnaceScheduler.furnaceDict[guid].Toggle();
-                return "";
+            case EventType.Enable:
+                {
+                    Guid guid = JsonConvert.DeserializeObject<Guid>(_event.Payload);
+                    furnaceScheduler.furnaceDict[guid].Toggle();
+                    return "";
+                }
 
-            case(EventType.SetSetpoint, KeyValuePair<Guid, Double>(Guid guid, Double setpoint)):
-                furnaceScheduler.furnaceDict[guid].SetSetpoint(setpoint);
-                return "";
+            case EventType.SetSetpoint:
+                {
+                    KeyValuePair<Guid, Double> pair = JsonConvert.DeserializeObject<KeyValuePair<Guid, Double>>(_event.Payload);
+                    furnaceScheduler.furnaceDict[pair.Key].SetSetpoint(pair.Value);
+                    return "";
+                }
 
-            case(EventType.StartDiameterControl, var _):
+            case EventType.StartDiameterControl:
                 diameterControl.Start();
                 return "";
 
-            case(EventType.SetManTrim, KeyValuePair<Guid, Double>(Guid guid, Double trim)):
-                furnaceScheduler.furnaceDict[guid].SetTrim(trim);
-                return "";
+            case EventType.SetManTrim:
+                {
+                    KeyValuePair<Guid, Double> pair = JsonConvert.DeserializeObject<KeyValuePair<Guid, Double>>(_event.Payload);
+                    furnaceScheduler.furnaceDict[pair.Key].SetTrim(pair.Value);
+                    return "";
+                }
 
-            case(EventType.SetGains, double kp):
-                diameterControl.SetGain(kp);
-                return "";
+            case EventType.SetGains:
+                {
+                    double kp = JsonConvert.DeserializeObject<double>(_event.Payload);
+                    diameterControl.SetGain(kp);
+                    return "";
+                }
 
-            case(EventType.SeekTime, KeyValuePair<Guid, int>(Guid guid, int ms)):
-                TimeSpan time = new TimeSpan(0, 0, 0, 0, ms);
-                furnaceScheduler.furnaceDict[guid].Seek(time);
-                return "";
+            case EventType.SeekTime:
+                {
+                    KeyValuePair<Guid, int> pair = JsonConvert.DeserializeObject<KeyValuePair<Guid, int>>(_event.Payload);
+                    TimeSpan time = new TimeSpan(0, 0, 0, 0, pair.Value);
+                    furnaceScheduler.furnaceDict[pair.Key].Seek(time);
+                    return "";
+                }
         }
         return "";
     }
