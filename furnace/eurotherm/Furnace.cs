@@ -33,6 +33,7 @@ public class Furnace
     private Profile? activeProfile;
     private FurnaceStatus _status;
     private double _setpoint;
+    private double _lastSetpoint;
     private double _trim;
     private double _processValue;
     private AlarmStatus _underrange, _overrange, _sensor, _rsp;
@@ -245,10 +246,6 @@ public class Furnace
                 {
                     _setpoint = newSet.setpoint + _trim;
                 }
-                else if (activeProfile != null)
-                {
-                    _setpoint = activeProfile.GetSetpoint() + _trim + _diameterControl.GetTrim();
-                }
 
                 if (_status == FurnaceStatus.Alarm)
                 {
@@ -271,7 +268,12 @@ public class Furnace
                     }
                 }
 
-                SetSetpoint(_setpoint);
+                if (activeProfile != null)
+                {
+                    _setpoint = activeProfile.GetSetpoint() + _trim + _diameterControl.GetTrim();
+                    SetSetpoint(_setpoint);
+                }
+
                 if (activeProfile != null)
                 {
                     FurnaceState newState = new FurnaceState
