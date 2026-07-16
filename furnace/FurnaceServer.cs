@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using furnace.camera;
 using furnace.grpc;
 
 namespace furnace;
@@ -15,6 +16,9 @@ public sealed class FurnaceServer : IAsyncDisposable
 
     public async Task StartAsync(int port = 5000, CancellationToken ct = default)
     {
+        BaslerCapture cap = new BaslerCapture();
+        cap.Start();
+        
         if (_app != null) throw new InvalidOperationException("Server already started.");
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
