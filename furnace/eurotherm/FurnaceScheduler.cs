@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Channels;
 using Newtonsoft.Json;
 using OpenCvSharp;
-using furnace.diameter;
 
 public class FurnaceScheduler : IDisposable
 {
@@ -25,9 +24,7 @@ public class FurnaceScheduler : IDisposable
             SingleWriter = true
         };
 
-    private DiameterControl _diameterControl;
-
-    public FurnaceScheduler(CancellationToken ct, DiameterControl diameterControl)
+    public FurnaceScheduler(CancellationToken ct)
     {
         if (!File.Exists(@"furnaces.json"))
         {
@@ -56,7 +53,7 @@ public class FurnaceScheduler : IDisposable
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
         _furnacesInit ??= [];
         Guid guid = Guid.NewGuid();
-        furnaceDict.AddOrUpdate(guid, (_) => new Furnace(init, _diameterControl), (guid, _) => FurnaceUpdateFactory(guid, init));
+        furnaceDict.AddOrUpdate(guid, (_) => new Furnace(init), (guid, _) => FurnaceUpdateFactory(guid, init));
         if (!_furnacesInit.Contains(init))
         {
             _furnacesInit.Add(init);
@@ -74,7 +71,7 @@ public class FurnaceScheduler : IDisposable
     public void ModifyFurnace(Guid guid, FurnaceInit init)
     {
         
-        furnaceDict.AddOrUpdate(guid, (_) => new Furnace(init, _diameterControl), (guid, _) => FurnaceUpdateFactory(guid, init));
+        furnaceDict.AddOrUpdate(guid, (_) => new Furnace(init), (guid, _) => FurnaceUpdateFactory(guid, init));
 
         string inits = JsonConvert.SerializeObject(_furnacesInit);
         File.WriteAllText(@"furnaces.json", inits);
@@ -85,7 +82,7 @@ public class FurnaceScheduler : IDisposable
         CancelWorker(guid);
         var cts = CancellationTokenSource.CreateLinkedTokenSource(_globalCt);
         var index = _furnacesInit.IndexOf(furnaceDict[guid].GetInit);
-        Furnace furnace = new Furnace(init, _diameterControl);
+        Furnace furnace = new Furnace(init);
 
         Task.Run(async () => furnace.Run(cts.Token), cts.Token);
         _workerCts[guid] = cts;

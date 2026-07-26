@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using furnace.profile;
 using furnace.stepper;
 using furnace.camera;
-using furnace.diameter;
+using Basler.Pylon;
 using Microsoft.AspNetCore.Identity;
 
 /// <summary>
@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Identity;
 /// </summary>
 public class Furnace
 {
-    private DiameterControl _diameterControl;
+    //private DiameterControl _diameterControl;
     public string furnaceLabel;
     public FurnaceInit GetInit;
     private ProfileStatus state;
@@ -32,6 +32,8 @@ public class Furnace
     private Channel<double> _trimchannel;
     private Profile? activeProfile;
     private FurnaceStatus _status;
+    private BaslerCapture capture;
+    private string _cameraSerial;
     private double _setpoint;
     private double _lastSetpoint;
     private double _trim;
@@ -51,7 +53,7 @@ public class Furnace
             SingleWriter = true
         };
 
-    public Furnace(FurnaceInit init, DiameterControl diameterControl)
+    public Furnace(FurnaceInit init)
     {
         _in = Channel.CreateBounded<FurnaceSet>(_inOpts);
         _out = Channel.CreateBounded<FurnaceState>(_outOpts);
@@ -61,7 +63,6 @@ public class Furnace
         _statechannel = Channel.CreateBounded<ProfileStatus>(_inOpts);
         _profilechannel = Channel.CreateBounded<Profile>(_inOpts);
         _trimchannel = Channel.CreateBounded<double>(_inOpts);
-        _diameterControl = diameterControl;
 
         //camera = new Capture(camIp, camPort);
         //camera.Start();
@@ -192,6 +193,25 @@ public class Furnace
         activeProfile.OnTimer.Seek(timeSpan);
     }
 
+
+    public async Task CameraInit()
+    {
+        List<ICameraInfo> cameras =
+            CameraFinder.Enumerate(DeviceType.GigE);
+
+        if (cameras.Count == 0)
+        {
+            Console.WriteLine("No Basler GigE cameras found.");
+            return;
+        }
+
+        ICameraInfo selectedCamera = cameras[0]; //TODO actually select based off of camera serial number
+
+        capture = new BaslerCapture(selectedCamera, ImageProcessor.ProcessFrameAsync);
+
+        await capture.StartAsync();
+    }
+
     public async Task Run(CancellationToken token)
     {
         try
@@ -201,6 +221,7 @@ public class Furnace
             newSet = default;
             state = ProfileStatus.Stopped;
             //activeProfile = await _profilechannel.Reader.ReadAsync(token);
+            await CameraInit();
 
             while (!token.IsCancellationRequested)
             {
@@ -270,7 +291,7 @@ public class Furnace
 
                 if (activeProfile != null)
                 {
-                    _setpoint = activeProfile.GetSetpoint() + _trim + _diameterControl.GetTrim();
+                    _setpoint = activeProfile.GetSetpoint() + _trim; //TODO include diameter control trim
                     SetSetpoint(_setpoint);
                 }
 

@@ -1,13 +1,13 @@
 using furnace.eurotherm;
 using furnace.profile;
 using furnace.grpc;
+using furnace.camera;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 
 namespace furnace;
 
 using System.Collections.Concurrent;
-using furnace.diameter;
 using furnace.grpc;
 using Microsoft.Extensions.Hosting;
 
@@ -15,14 +15,12 @@ public sealed class Coordinator : IHostedService, IDisposable
 {
     private FurnaceScheduler furnaceScheduler;
     private ProfileHandler profileHandler;
-    private DiameterControl diameterControl;
     private StepperGrpcClient stepperClient;
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        furnaceScheduler = new FurnaceScheduler(cancellationToken, diameterControl);
+        furnaceScheduler = new FurnaceScheduler(cancellationToken);
         profileHandler = new ProfileHandler();
-        diameterControl = new DiameterControl(4, 6.92, 15, 45, 0.1);
         return Task.CompletedTask;
     }
 
@@ -214,7 +212,7 @@ public sealed class Coordinator : IHostedService, IDisposable
                 }
 
             case EventType.StartDiameterControl:
-                diameterControl.Start();
+                //diameterControl.Start();
                 return "";
 
             case EventType.SetManTrim:
@@ -227,7 +225,7 @@ public sealed class Coordinator : IHostedService, IDisposable
             case EventType.SetGains:
                 {
                     double kp = JsonConvert.DeserializeObject<double>(_event.Payload);
-                    diameterControl.SetGain(kp);
+                    //diameterControl.SetGain(kp);
                     return "";
                 }
 
@@ -244,6 +242,6 @@ public sealed class Coordinator : IHostedService, IDisposable
 
     public void ProcessMassData(uint[] timeArray, double[] massArray)
     {
-        diameterControl.AddData(timeArray, massArray);
+        //diameterControl.AddData(timeArray, massArray);
     }
 }
