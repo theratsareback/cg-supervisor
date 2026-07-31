@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Identity;
 public class Furnace
 {
     //private DiameterControl _diameterControl;
+    private ImageProcessor imageProcessor;
     public string furnaceLabel;
     public FurnaceInit GetInit;
     private ProfileStatus state;
@@ -63,6 +64,7 @@ public class Furnace
         _statechannel = Channel.CreateBounded<ProfileStatus>(_inOpts);
         _profilechannel = Channel.CreateBounded<Profile>(_inOpts);
         _trimchannel = Channel.CreateBounded<double>(_inOpts);
+        imageProcessor = new ImageProcessor(new OpenCvSharp.Size(2616, 1960));
 
         //camera = new Capture(camIp, camPort);
         //camera.Start();
@@ -194,20 +196,21 @@ public class Furnace
     }
 
 
-    public async Task CameraInit()
+    private async Task CameraInit()
     {
+        Console.WriteLine("Initializing camera");
         List<ICameraInfo> cameras =
             CameraFinder.Enumerate(DeviceType.GigE);
 
         if (cameras.Count == 0)
         {
-            Console.WriteLine("No Basler GigE cameras found.");
+            Console.WriteLine("Cannot see cameras"); //TODO handle properly
             return;
         }
 
-        ICameraInfo selectedCamera = cameras[0]; //TODO actually select based off of camera serial number
+        ICameraInfo selectedCamera = cameras[0]; //TODO select based off of camera serial number
 
-        capture = new BaslerCapture(selectedCamera, ImageProcessor.ProcessFrameAsync);
+        capture = new BaslerCapture(selectedCamera, imageProcessor.ProcessFrameAsync);
 
         await capture.StartAsync();
     }
@@ -216,12 +219,13 @@ public class Furnace
     {
         try
         {
-            FurnaceSet newSet;
-            //newSet = await _in.Reader.ReadAsync(token);
-            newSet = default;
-            state = ProfileStatus.Stopped;
-            //activeProfile = await _profilechannel.Reader.ReadAsync(token);
+            Console.WriteLine("Calling camera initialization");
             await CameraInit();
+            Console.WriteLine("Camera initialized");
+
+            FurnaceSet newSet;
+            newSet = new FurnaceSet();
+            state = ProfileStatus.Stopped;
 
             while (!token.IsCancellationRequested)
             {
@@ -263,10 +267,10 @@ public class Furnace
                     }
                 }
 
-                if (newSet.manualSetpoint)
-                {
-                    _setpoint = newSet.setpoint + _trim;
-                }
+                // if (newSet.manualSetpoint)
+                // {
+                //     _setpoint = newSet.setpoint + _trim;
+                // }
 
                 if (_status == FurnaceStatus.Alarm)
                 {
@@ -336,6 +340,10 @@ public class Furnace
         catch (OperationCanceledException)
         {
             // normal shutdown path
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
         }
     }
 

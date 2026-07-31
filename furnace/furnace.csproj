@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="Basler.Pylon.NET8.x64" Version="11.2.1.755" />
+    <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64.slim" Version="4.13.0.20260627" />
+    <Reference Include="/opt/pylon/share/pylon/assemblies/Basler.Pylon/net8.0/Basler.Pylon.dll" />
     <PackageReference Include="Google.Protobuf" Version="3.33.4" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
     <PackageReference Include="Grpc.Core.Api" Version="2.76.0" />
@@ -18,8 +20,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NModbus" Version="3.0.81" />
-    <PackageReference Include="OpenCvSharp4" Version="4.11.0.20250507" />
-    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.11.0.20250507" />
+    <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
     <Protobuf Include="grpc\protos\event.proto" />
     <Protobuf Include="grpc\protos\stream.proto" />
     <Protobuf Include="grpc\protos\stepper.proto" />
